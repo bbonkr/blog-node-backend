@@ -1,0 +1,17 @@
+{
+    "verbose": true,
+    "watch": [
+        "config",
+        "helpers",
+        "models",
+        "passport",
+        "routes",
+        "utils",
+        "index.js",
+        "nodemon.json"
+    ],
+    "ignore": ["*.test.js", "__snapshots__"],
+    "exec": "node index.js",
+    "ext": "js json jsx",
+    "delay": 2500
+}
