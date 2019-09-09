@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
         },
     );
 
-    UserLikePost.associate = db => {
+    UserLikePost.associate = (db) => {
         db.UserLikePost.belongsTo(db.User);
         db.UserLikePost.belongsTo(db.Post);
         // db.Post.belongsToMany(db.User, {
