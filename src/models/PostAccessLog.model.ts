@@ -7,11 +7,14 @@ import {
     AllowNull,
     Unique,
     Default,
+    ForeignKey,
+    BelongsTo,
 } from 'sequelize-typescript';
+import { Post } from './Post.model';
 
 @Table({
     modelName: 'PostAccessLog',
-    tableName: 'PostAccessLogs', // TODO 테이블 이름 확인
+    tableName: 'PostAccessLogs',
     comment: '글 접근 로그',
     timestamps: true,
     charset: 'utf8mb4',
@@ -29,4 +32,12 @@ export class PostAccessLog extends Model<PostAccessLog> {
     @AllowNull(true)
     @Column(DataType.INTEGER)
     public userId: number;
+
+    @AllowNull(false)
+    @ForeignKey(() => Post)
+    @Column(DataType.INTEGER)
+    public postId: number;
+
+    @BelongsTo(() => Post)
+    public post!: Post;
 }

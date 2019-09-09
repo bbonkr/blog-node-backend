@@ -5,11 +5,15 @@ import {
     Comment as ColumnComment,
     DataType,
     AllowNull,
+    ForeignKey,
+    BelongsTo,
 } from 'sequelize-typescript';
+import { User } from './User.model';
+import { Post } from './Post.model';
 
 @Table({
     modelName: 'Comment',
-    tableName: 'Comments', // TODO 테이블 이름 확인
+    tableName: 'Comments',
     comment: '댓글',
     timestamps: true,
     charset: 'utf8mb4',
@@ -30,4 +34,20 @@ export class Comment extends Model<Comment> {
     @AllowNull(false)
     @Column(DataType.TEXT)
     public text!: string;
+
+    @AllowNull(false)
+    @ForeignKey(() => User)
+    @Column(DataType.INTEGER)
+    public userId!: number;
+
+    @BelongsTo(() => User)
+    public user!: User;
+
+    @AllowNull(false)
+    @ForeignKey(() => Post)
+    @Column(DataType.INTEGER)
+    public postId!: number;
+
+    @BelongsTo(() => Post)
+    public post!: Post;
 }

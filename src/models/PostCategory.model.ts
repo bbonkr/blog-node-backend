@@ -5,32 +5,32 @@ import {
     Comment,
     DataType,
     AllowNull,
-    Unique,
     Default,
-    PrimaryKey,
     ForeignKey,
+    BelongsTo,
+    PrimaryKey,
 } from 'sequelize-typescript';
 import { Post } from './Post.model';
-import { User } from './User.model';
+import { Category } from './Category.model';
 
 @Table({
-    modelName: 'UserLikePost',
-    tableName: 'UserLikePost',
-    comment: '글-좋아요',
+    modelName: 'PostCategory',
+    tableName: 'PostCategory',
+    comment: '글-분류',
     timestamps: true,
     charset: 'utf8mb4',
     collate: 'utf8mb4_general_ci',
 })
-export class UserLikePost extends Model<UserLikePost> {
+export class PostCategory extends Model<PostCategory> {
     @AllowNull(false)
     @PrimaryKey
     @ForeignKey(() => Post)
     @Column(DataType.INTEGER)
-    public postId!: number;
+    public postId: number;
 
     @AllowNull(false)
     @PrimaryKey
-    @ForeignKey(() => User)
+    @ForeignKey(() => Category)
     @Column(DataType.INTEGER)
-    public userId!: number;
+    public categoryId!: number;
 }

@@ -6,11 +6,17 @@ import {
     DataType,
     AllowNull,
     Default,
+    ForeignKey,
+    BelongsTo,
+    BelongsToMany,
 } from 'sequelize-typescript';
+import { User } from './User.model';
+import { Post } from './Post.model';
+import { PostCategory } from './PostCategory.model';
 
 @Table({
     modelName: 'Category',
-    tableName: 'Categories', // TODO 테이블 이름 확인
+    tableName: 'Categories',
     comment: '분류',
     timestamps: true,
     charset: 'utf8mb4',
@@ -34,4 +40,14 @@ export class Category extends Model<Category> {
     public ordinal!: number;
 
     // TODO 관계
+    @AllowNull(false)
+    @ForeignKey(() => User)
+    @Column(DataType.INTEGER)
+    public userId: number;
+
+    @BelongsTo(() => User)
+    public user!: User;
+
+    @BelongsToMany(() => Post, () => PostCategory)
+    public posts!: Post[];
 }

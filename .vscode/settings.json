@@ -3,7 +3,7 @@
     "editor.cursorSmoothCaretAnimation": true,
     "editor.formatOnSave": true,
     "editor.acceptSuggestionOnCommitCharacter": true,
-    "editor.acceptSuggestionOnEnter": "smart",
+    "editor.acceptSuggestionOnEnter": "on",
     "editor.autoClosingBrackets": "languageDefined",
     "editor.autoClosingQuotes": "languageDefined",
     "editor.autoSurround": "languageDefined",

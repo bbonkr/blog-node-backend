@@ -5,23 +5,23 @@ import {
     Comment,
     DataType,
     AllowNull,
-    Unique,
     Default,
-    PrimaryKey,
     ForeignKey,
+    BelongsTo,
+    PrimaryKey,
 } from 'sequelize-typescript';
 import { Post } from './Post.model';
-import { User } from './User.model';
+import { Image } from './Image.model';
 
 @Table({
-    modelName: 'UserLikePost',
-    tableName: 'UserLikePost',
-    comment: '글-좋아요',
+    modelName: 'PostImage',
+    tableName: 'PostImage', // TODO 테이블 이름 확인
+    comment: '첨부파일',
     timestamps: true,
     charset: 'utf8mb4',
     collate: 'utf8mb4_general_ci',
 })
-export class UserLikePost extends Model<UserLikePost> {
+export class PostImage extends Model<PostImage> {
     @AllowNull(false)
     @PrimaryKey
     @ForeignKey(() => Post)
@@ -30,7 +30,7 @@ export class UserLikePost extends Model<UserLikePost> {
 
     @AllowNull(false)
     @PrimaryKey
-    @ForeignKey(() => User)
+    @ForeignKey(() => Image)
     @Column(DataType.INTEGER)
-    public userId!: number;
+    public imageId!: number;
 }

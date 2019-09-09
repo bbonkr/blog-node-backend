@@ -8,15 +8,17 @@
     "license": "MIT",
     "scripts": {
         "test": "react-scripts test --testMatch ./**/*.test.{js,jsx,ts,tsx}",
-        "dev": "cross-env PORT=5000 nodemon",
+        "dev": "cross-env PORT=5000 node ./bundle/app.js",
+        "bundle": "cross-env NODE_ENV=development webpack",
         "sequelize": "node_modules/.bin/sequelize",
-        "build": "cross-env NODE_ENV=production BUNDLE_ANALYZER=both next build",
+        "build": "cross-env NODE_ENV=production tsc",
         "prestart": "npm run build",
         "start": "cross-env NODE_ENV=production node index.js",
         "next:start": "cross-env NODE_ENV=production next start -p 5000"
     },
     "dependencies": {
         "@sendgrid/mail": "^6.4.0",
+        "aws-sdk": "^2.524.0",
         "babel-eslint": "^10.0.2",
         "bcrypt": "^3.0.6",
         "compression-webpack-plugin": "^3.0.0",
@@ -28,23 +30,23 @@
         "eslint": "^6.2.2",
         "express": "^4.17.0",
         "express-session": "^1.16.2",
+        "jsonwebtoken": "^8.5.1",
         "mariadb": "^2.1.0",
         "moment": "^2.24.0",
         "morgan": "^1.9.1",
         "multer": "^1.4.2",
         "nodemon": "^1.19.0",
         "passport": "^0.4.0",
+        "passport-jwt": "^4.0.0",
         "passport-local": "^1.0.0",
+        "pg-hstore": "^2.3.3",
+        "reflect-metadata": "^0.1.13",
         "sequelize": "^5.10.0",
-        "showdown": "^1.9.0",
-        "showdown-xss-filter": "^0.2.0",
-        "webpack": "^4.35.3",
         "sequelize-typescript": "^1.0.0",
-        "jsonwebtoken": "^8.5.1",
-        "passport-jwt": "^4.0.0"
+        "showdown": "^1.9.0",
+        "showdown-xss-filter": "^0.2.0"
     },
     "devDependencies": {
-        "sequelize-cli": "^5.5.0",
         "@types/bcrypt": "^3.0.0",
         "@types/bluebird": "^3.5.27",
         "@types/cookie-parser": "^1.4.2",
@@ -59,8 +61,13 @@
         "@types/passport-jwt": "^3.0.1",
         "@types/passport-local": "^1.0.33",
         "@types/validator": "^10.11.3",
+        "@types/webpack": "^4.39.1",
         "nodemon": "^1.19.2",
+        "sequelize-cli": "^5.5.0",
+        "ts-loader": "^6.0.4",
         "tslint": "^5.19.0",
-        "typescript": "^3.6.2"
+        "typescript": "^3.6.2",
+        "webpack": "^4.39.3",
+        "webpack-cli": "^3.3.8"
     }
 }

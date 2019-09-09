@@ -7,7 +7,10 @@ import {
     AllowNull,
     Unique,
     Default,
+    BelongsToMany,
 } from 'sequelize-typescript';
+import { Post } from './Post.model';
+import { PostTag } from './PostTag.model';
 
 @Table({
     modelName: 'Tag',
@@ -25,4 +28,7 @@ export class Tag extends Model<Tag> {
     @AllowNull(false)
     @Column(DataType.STRING(100))
     public slug!: string;
+
+    @BelongsToMany(() => Post, () => PostTag)
+    public posts!: Post[];
 }

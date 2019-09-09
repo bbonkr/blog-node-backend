@@ -7,7 +7,10 @@ import {
     AllowNull,
     Unique,
     Default,
+    ForeignKey,
+    BelongsTo,
 } from 'sequelize-typescript';
+import { User } from './User.model';
 
 @Table({
     modelName: 'ResetPasswordCode',
@@ -33,4 +36,12 @@ export class ResetPasswordCode extends Model<ResetPasswordCode> {
     @AllowNull(false)
     @Column(DataType.DATE)
     public expired!: Date;
+
+    @AllowNull(false)
+    @ForeignKey(() => User)
+    @Column(DataType.INTEGER)
+    public userId!: number;
+
+    @BelongsTo(() => User)
+    public user!: User;
 }

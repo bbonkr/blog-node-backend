@@ -6,11 +6,17 @@ import {
     DataType,
     AllowNull,
     Default,
+    ForeignKey,
+    BelongsTo,
+    BelongsToMany,
 } from 'sequelize-typescript';
+import { User } from './User.model';
+import { PostImage } from './PostImage.model';
+import { Post } from './Post.model';
 
 @Table({
     modelName: 'Image',
-    tableName: 'Images', // TODO 테이블 이름 확인
+    tableName: 'Images',
     comment: '첨부파일',
     timestamps: true,
     charset: 'utf8mb4',
@@ -49,4 +55,15 @@ export class Image extends Model<Image> {
     @Default('application/octet-stream')
     @Column(DataType.STRING(100))
     public contentType!: string;
+
+    @AllowNull(false)
+    @ForeignKey(() => User)
+    @Column(DataType.INTEGER)
+    public userId!: number;
+
+    @BelongsTo(() => User)
+    public user!: User;
+
+    @BelongsToMany(() => Post, () => PostImage)
+    public posts!: Post[];
 }

@@ -9,11 +9,13 @@ import {
     Default,
     PrimaryKey,
     ForeignKey,
+    BelongsTo,
 } from 'sequelize-typescript';
+import { User } from './User.model';
 
 @Table({
     modelName: 'UserVerifyCode',
-    tableName: 'UserVerifyCodes', // TODO 테이블 이름 확인
+    tableName: 'UserVerifyCodes',
     comment: '전자우편 확인 코드',
     timestamps: true,
     charset: 'utf8mb4',
@@ -31,4 +33,12 @@ export class UserVerifyCode extends Model<UserVerifyCode> {
     @AllowNull(false)
     @Column(DataType.DATE)
     public expire!: Date;
+
+    @AllowNull(false)
+    @ForeignKey(() => User)
+    @Column(DataType.INTEGER)
+    public userId!: number;
+
+    @BelongsTo(() => User)
+    public user!: User;
 }
