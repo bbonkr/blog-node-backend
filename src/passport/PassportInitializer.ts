@@ -65,11 +65,17 @@ export class PassportInitializer {
                         user?: User,
                         options?: IVerifyOptions,
                     ) => void,
-                ) => {
+                ): Promise<void> => {
                     try {
-                        const user = await User.findOne({
+                        let user: User = await User.findOne({
                             where: { username: username },
                         });
+
+                        if (!user) {
+                            user = await User.findOne({
+                                where: { email: username },
+                            });
+                        }
 
                         if (!user) {
                             // TODO 시도 횟수 증가
@@ -97,7 +103,7 @@ export class PassportInitializer {
                                 ],
                             });
 
-                            return done(null, transferUser);
+                            return done(null, transferUser, null);
                         } else {
                             // TODO 시도 횟수 증가
                             return done(null, null, {
@@ -133,7 +139,7 @@ export class PassportInitializer {
                     user?: any,
                     options?: IVerifyOptions,
                 ) => void,
-            ) => {
+            ): Promise<void> => {
                 try {
                     const { username } = payload;
 

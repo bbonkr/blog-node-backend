@@ -10,11 +10,16 @@
         "sequelize": "node_modules/.bin/sequelize",
         "test": "react-scripts test --testMatch ./**/*.test.{js,jsx,ts,tsx}",
         "lint": "tslint src/**/*.ts{,x} --config ./tslint.json --fix",
+        "lint:dev": "cross-env NODE_ENV=development npm run lint",
+        "lint:prod": "cross-env NODE_ENV=production npm run lint",
         "bundle": "webpack",
+        "bundle:prod": "cross-env NODE_ENV=production npm run bundle",
         "build": "tsc",
-        "dev": "cross-env PORT=3000 NODE_ENV=development npm run lint && npm run build && node ./dist/index.js",
+        "build:dev": "cross-env NODE_ENV=development npm run build",
+        "build:prod": "cross-env NODE_ENV=production npm run build",
+        "dev": "npm run lint:dev && npm run build:dev && cross-env PORT=5000 NODE_ENV=development node ./dist/index.js",
         "prestart": "npm run lint",
-        "start": "cross-env PORT=3000 NODE_ENV=production npm run build && npm run bundle && node ./bundle/index.js"
+        "start": "npm run lint:prod && npm run bundle:prod && cross-env PORT=5000 NODE_ENV=production node ./bundle/index.js"
     },
     "dependencies": {
         "@sendgrid/mail": "^6.4.0",

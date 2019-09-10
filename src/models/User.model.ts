@@ -64,7 +64,10 @@ export class User extends Model<User> {
     @HasMany(() => Post)
     public posts!: Post[];
 
-    @BelongsToMany(() => Post, () => UserLikePost)
+    @BelongsToMany(() => Post, {
+        through: () => UserLikePost,
+        as: 'likedPosts',
+    })
     public likedPosts: Post[];
 
     @HasMany(() => UserVerifyCode)
