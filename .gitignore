@@ -338,3 +338,8 @@ uploads/
 
 # macos
 .DS_Store
+
+# build result
+dist/
+bundle/
+tsconfig.tsbuildinfo
