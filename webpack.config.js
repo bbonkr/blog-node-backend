@@ -20,7 +20,7 @@ module.exports = {
         extensions: ['.ts', '.js'],
     },
     entry: {
-        app: './src/index',
+        index: './src/index',
     },
     module: {
         rules: [

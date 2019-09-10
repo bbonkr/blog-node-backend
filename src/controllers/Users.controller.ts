@@ -75,7 +75,7 @@ export class UsersController extends ControllerBase {
                 });
             }
 
-            let where: WhereOptions = { UserId: foundUser.id };
+            const where: WhereOptions = { UserId: foundUser.id };
 
             if (keyword) {
                 Object.assign(where, {
@@ -349,8 +349,8 @@ export class UsersController extends ControllerBase {
                 where: {
                     slug: category,
                     userId: foundUser.id,
-                    attribute: ['id', 'slug', 'name'],
                 },
+                attributes: ['id', 'slug', 'name'],
             });
 
             if (!foundCategory) {
@@ -360,7 +360,7 @@ export class UsersController extends ControllerBase {
                 });
             }
 
-            let where: WhereOptions = { UserId: foundUser.id };
+            const where: WhereOptions = { UserId: foundUser.id };
 
             if (keyword) {
                 Object.assign(where, {

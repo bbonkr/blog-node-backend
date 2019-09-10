@@ -7,14 +7,14 @@
     "author": "",
     "license": "MIT",
     "scripts": {
-        "test": "react-scripts test --testMatch ./**/*.test.{js,jsx,ts,tsx}",
-        "dev": "cross-env PORT=5000 node ./bundle/app.js",
-        "bundle": "cross-env NODE_ENV=development webpack",
         "sequelize": "node_modules/.bin/sequelize",
-        "build": "cross-env NODE_ENV=production tsc",
-        "prestart": "npm run build",
-        "start": "cross-env NODE_ENV=production node index.js",
-        "next:start": "cross-env NODE_ENV=production next start -p 5000"
+        "test": "react-scripts test --testMatch ./**/*.test.{js,jsx,ts,tsx}",
+        "lint": "tslint src/**/*.ts{,x} --config ./tslint.json --fix",
+        "bundle": "webpack",
+        "build": "tsc",
+        "dev": "cross-env PORT=3000 NODE_ENV=development npm run lint && npm run build && node ./dist/index.js",
+        "prestart": "npm run lint",
+        "start": "cross-env PORT=3000 NODE_ENV=production npm run build && npm run bundle && node ./bundle/index.js"
     },
     "dependencies": {
         "@sendgrid/mail": "^6.4.0",
@@ -56,6 +56,7 @@
         "@types/express-session": "^1.15.14",
         "@types/lodash": "^4.14.138",
         "@types/morgan": "^1.7.37",
+        "@types/multer": "^1.3.9",
         "@types/node": "^12.7.3",
         "@types/passport": "^1.0.1",
         "@types/passport-jwt": "^3.0.1",
