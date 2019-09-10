@@ -137,7 +137,7 @@ export class MeController extends ControllerBase {
     ): Promise<any> {
         try {
             const limit: number = parseInt(req.query.limit || '10', 10);
-            const keyword: string = decodeURIComponent(req.query.keyword);
+            const keyword: string = decodeURIComponent(req.query.keyword || '');
             const pageToken = parseInt(req.query.pageToken || '0', 10);
             const skip: number = pageToken ? 1 : 0;
 
@@ -574,7 +574,7 @@ export class MeController extends ControllerBase {
         try {
             const pageToken: number = parseInt(req.query.pageToken || '0', 10);
             const limit: number = parseInt(req.query.limit || '10', 10);
-            const keyword: string = decodeURIComponent(req.query.keyword);
+            const keyword: string = decodeURIComponent(req.query.keyword) || '';
 
             // const skip = pageToken ? 1 : 0;
             const where: WhereOptions = { UserId: req.user.id };
@@ -938,7 +938,7 @@ export class MeController extends ControllerBase {
     ): Promise<any> {
         try {
             const limit: number = parseInt(req.query.limit || '10', 10);
-            const keyword: string = decodeURIComponent(req.query.keyword);
+            const keyword: string = decodeURIComponent(req.query.keyword) || '';
             const pageToken: string = req.query.pageToken;
             const skip: number = pageToken ? 1 : 0;
 

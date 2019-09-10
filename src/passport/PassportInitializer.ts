@@ -143,36 +143,30 @@ export class PassportInitializer {
                 try {
                     const { username } = payload;
 
-                    User.findOne({
+                    const user = await User.findOne({
                         where: {
                             username: username,
                         },
                         attributes: ['id', 'username', 'email', 'displayName'],
-                    })
-                        .then((user) => {
-                            if (!user) {
-                                throw new Error(
-                                    'could not find a account information.',
-                                );
-                            }
+                    });
 
-                            req.user = {
-                                id: user.id,
-                                username: user.username,
-                            };
-                            req.userInfo = user;
+                    if (!user) {
+                        throw new Error(
+                            'could not find a account information.',
+                        );
+                    }
 
-                            done(null, user, null);
-                        })
-                        .catch((err: Error) => {
-                            done(err, null, {
-                                message: err.message,
-                            });
-                        });
-                } catch (e) {
-                    console.error(e);
-                    done(e, null, {
-                        message: e,
+                    req.user = {
+                        id: user.id,
+                        username: user.username,
+                    };
+                    req.userInfo = user;
+
+                    done(null, user, null);
+                } catch (err) {
+                    console.error(err);
+                    done(err, null, {
+                        message: err.message,
                     });
                 }
             },
