@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { App } from './app';
 import { PostsController } from './controllers/Posts.controller';
+import { UsersController } from './controllers/Users.controller';
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ const app: App = new App(
     [
         /* 컨트롤러 */
         new PostsController(),
+        new UsersController(),
     ],
     port,
 );

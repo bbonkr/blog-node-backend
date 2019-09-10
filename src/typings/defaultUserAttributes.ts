@@ -4,5 +4,4 @@ export const defaultUserAttributes: string[] = [
     'username',
     'displayName',
     'photo',
-    'isEmailConfirmed',
 ];
