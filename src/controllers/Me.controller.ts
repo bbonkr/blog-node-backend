@@ -4,6 +4,7 @@ import fs from 'fs';
 import { ControllerBase } from '../typings/ControllerBase';
 import { User } from '../models/User.model';
 import { Post } from '../models/Post.model';
+import { Comment } from '../models/Comment.model';
 import { defaultUserAttributes } from '../typings/defaultUserAttributes';
 import { HttpStatusError } from '../typings/HttpStatusError';
 import { JsonResult } from '../typings/JsonResult';
@@ -18,6 +19,11 @@ import { IListResult } from '../typings/IListResult';
 import { uploadToDiskStorage } from '../middleware/uload';
 import { replaceAll, makeSlug } from '../helpers/stringHelper';
 import { UserLikePost } from '../models/UserLikePost.model';
+import { markdownConverter } from '../helpers/converter';
+import { IDictionary } from '../typings/IDictionary';
+import { IPostFormData } from '../typings/IPostFormData';
+
+export const EXCERPT_LENGTH: number = 200;
 
 export class MeController extends ControllerBase {
     public getPath(): string {
@@ -28,6 +34,9 @@ export class MeController extends ControllerBase {
 
         this.router.get('/posts', authWithJwt, this.getPosts);
         this.router.get('/post/:id', authWithJwt, this.getPost);
+        this.router.post('/post', authWithJwt, this.addPost);
+        this.router.patch('/post/:id', authWithJwt, this.updatePost);
+        this.router.delete('/post/:id', authWithJwt, this.deletePost);
 
         this.router.get('/media', authWithJwt, this.getFiles);
         this.router.get('/files', authWithJwt, this.getFiles);
@@ -1072,6 +1081,529 @@ export class MeController extends ControllerBase {
         }
     }
 
+    /**
+     * 글을 추가합니다.
+     * ```
+     * POST:/api/me/post
+     * ```
+     * ```
+     * body {
+     *      title: string;
+     *      slug?: string;
+     *      markdown: string;
+     *      coverImage?: string;
+     *      categories: {
+     *          id?: number;
+     *          name?: string;
+     *          slug?: string;
+     *      }[],
+     *      tags: {
+     *          id?: number;
+     *          name?: string;
+     *          slug?: string;
+     *      }[]
+     * }
+     * ```
+     * @param req
+     * @param res
+     * @param next
+     */
+    private async addPost(
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+    ): Promise<any> {
+        try {
+            const {
+                title,
+                slug,
+                markdown,
+                coverImage,
+                categories,
+                tags,
+            }: IPostFormData = req.body;
+
+            if (!title || title.trim().length === 0) {
+                throw new HttpStatusError({
+                    code: 400,
+                    message: 'Please make sure title does have empty value.',
+                });
+            }
+
+            if (!markdown || markdown.trim().length === 0) {
+                throw new HttpStatusError({
+                    code: 400,
+                    message: 'Please make sure title does have empty value.',
+                });
+            }
+
+            const html = markdownConverter().makeHtml(markdown);
+            const text = this.stripHtml(html);
+            const slugEdit = !!slug ? slug : makeSlug(title);
+
+            const checkPost = await Post.findOne({
+                where: { slug: slug, UserId: req.user.id },
+            });
+
+            if (checkPost) {
+                // 동일한 슬러그를 사용할 수 없습니다.
+                throw new HttpStatusError({
+                    code: 400,
+                    message: `The [${slug}] post is exists already.`,
+                });
+            }
+
+            const post = await Post.create({
+                title: title,
+                slug: slugEdit,
+                markdown: markdown,
+                html: html,
+                text: text,
+                excerpt: this.getExcerpt(text),
+                coverImage: coverImage,
+                UserId: req.user.id,
+            });
+
+            if (categories && categories.length > 0) {
+                const foundCategories = await Promise.all(
+                    categories.map((v) => {
+                        return Category.findOne({ where: { slug: v.slug } });
+                    }),
+                );
+
+                await Promise.all(
+                    foundCategories.map((c) => {
+                        return post.$add('categories', c);
+                    }),
+                );
+            }
+
+            if (tags && tags.length > 0) {
+                const foundTags = await Promise.all(
+                    tags.map((v) => {
+                        const tagSlug = makeSlug(v.name);
+                        return Tag.findOrCreate({
+                            where: { slug: tagSlug },
+                            defaults: {
+                                name: v.name,
+                                slug: tagSlug,
+                            },
+                        });
+                    }),
+                );
+
+                await Promise.all(
+                    foundTags.map((t) => {
+                        return post.$add('tags', t[0]);
+                    }),
+                );
+            }
+
+            const newPost = await Post.findOne({
+                where: {
+                    id: post.id,
+                    userId: req.user.id,
+                },
+                include: [
+                    {
+                        model: User,
+                        as: 'user',
+                        attributes: defaultUserAttributes,
+                    },
+                    {
+                        model: Tag,
+                        attributes: ['id', 'name', 'slug'],
+                    },
+                    {
+                        model: Category,
+                        attributes: ['id', 'name', 'slug'],
+                    },
+                    {
+                        model: PostAccessLog,
+                        attributes: ['id'],
+                    },
+                    {
+                        model: User,
+                        as: 'likers',
+                        attributes: ['id'],
+                    },
+                ],
+                order: [['createdAt', 'DESC']],
+                attributes: [
+                    'id',
+                    'title',
+                    'slug',
+                    'html',
+                    'coverImage',
+                    'createdAt',
+                    'updatedAt',
+                ],
+            });
+
+            return res.json(
+                new JsonResult({
+                    success: true,
+                    data: newPost,
+                }),
+            );
+        } catch (err) {
+            return next(err);
+        }
+    }
+
+    /**
+     * 글을 수정합니다.
+     * ```
+     * PATCH:/api/me/post/:id
+     * ```
+     * ```
+     * body {
+     *      title: string;
+     *      slug?: string;
+     *      markdown: string;
+     *      coverImage?: string;
+     *      categories: {
+     *          id?: number;
+     *          name?: string;
+     *          slug?: string;
+     *      }[],
+     *      tags: {
+     *          id?: number;
+     *          name?: string;
+     *          slug?: string;
+     *      }[]
+     * }
+     * ```
+     * @param req
+     * @param res
+     * @param next
+     */
+    private async updatePost(
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+    ): Promise<any> {
+        try {
+            const { id } = req.params;
+
+            const post = await Post.findOne({
+                where: { id: id, userId: req.user.id },
+                include: [
+                    {
+                        model: User,
+                        as: 'user',
+                        attributes: defaultUserAttributes,
+                    },
+                    {
+                        model: Tag,
+                        attributes: ['id', 'name', 'slug'],
+                    },
+                    {
+                        model: Category,
+                        attributes: ['id', 'name', 'slug'],
+                    },
+                    {
+                        model: User,
+                        as: 'likers',
+                        attributes: ['id'],
+                    },
+                ],
+            });
+
+            if (!post) {
+                throw new HttpStatusError({
+                    code: 404,
+                    message:
+                        'Could not find a post. The post may not be yours.',
+                });
+            }
+
+            const {
+                title,
+                slug,
+                markdown,
+                coverImage,
+                categories,
+                tags,
+            }: IPostFormData = req.body;
+
+            if (!title || title.trim().length === 0) {
+                throw new HttpStatusError({
+                    code: 400,
+                    message: 'Please make sure title does have empty value.',
+                });
+            }
+
+            if (!markdown || markdown.trim().length === 0) {
+                throw new HttpStatusError({
+                    code: 400,
+                    message: 'Please make sure title does have empty value.',
+                });
+            }
+
+            const html = markdownConverter().makeHtml(markdown);
+            const text = this.stripHtml(html);
+            const slugEdit = !!slug ? slug : makeSlug(title);
+
+            const checkPost = await Post.findOne({
+                where: {
+                    slug: slug,
+                    UserId: req.user.id,
+                    id: { [Sequelize.Op.ne]: post.id },
+                },
+                attributes: ['id'],
+            });
+
+            if (!!checkPost) {
+                // 동일한 슬러그를 사용할 수 없습니다.
+                throw new HttpStatusError({
+                    code: 400,
+                    message: 'The [${slug}] post is exists already.',
+                });
+            }
+
+            await post.update(
+                {
+                    title: title,
+                    slug: slugEdit,
+                    markdown: markdown,
+                    html: html,
+                    text: text,
+                    excerpt: this.getExcerpt(text),
+                    coverImage: coverImage,
+                },
+                {
+                    fields: [
+                        'title',
+                        'slug',
+                        'markdown',
+                        'html',
+                        'text',
+                        'excerpt',
+                        'coverImage',
+                    ],
+                },
+            );
+
+            if (post.categories && post.categories.length > 0) {
+                await Promise.all(
+                    post.categories.map((c) => {
+                        return post.$remove('categories', c);
+                    }),
+                );
+            }
+
+            if (post.tags && post.tags.length > 0) {
+                await Promise.all(
+                    post.tags.map((t) => {
+                        return post.$remove('tags', t);
+                    }),
+                );
+            }
+
+            if (categories && categories.length > 0) {
+                const foundCategories = await Promise.all(
+                    categories.map((v) => {
+                        return Category.findOne({ where: { slug: v.slug } });
+                    }),
+                );
+
+                await Promise.all(
+                    foundCategories.map((c) => {
+                        return post.$add('categories', c);
+                    }),
+                );
+            }
+
+            if (tags && tags.length > 0) {
+                const foundTagsAndCreated = await Promise.all(
+                    tags.map((v) => {
+                        const tagSlug: string = makeSlug(v.name);
+                        return Tag.findOrCreate({
+                            where: { slug: tagSlug },
+                            defaults: {
+                                name: v.name,
+                                slug: tagSlug,
+                            },
+                        });
+                    }),
+                );
+
+                await Promise.all(
+                    foundTagsAndCreated.map((t) => {
+                        return post.$add('tags', t[0]);
+                    }),
+                );
+            }
+
+            const changedPost = await Post.findOne({
+                where: {
+                    id: post.id,
+                    userId: req.user.id,
+                },
+                include: [
+                    {
+                        model: User,
+                        as: 'user',
+                        attributes: defaultUserAttributes,
+                    },
+                    {
+                        model: Tag,
+                        attributes: ['id', 'name', 'slug'],
+                    },
+                    {
+                        model: Category,
+                        attributes: ['id', 'name', 'slug'],
+                    },
+                    {
+                        model: PostAccessLog,
+                        attributes: ['id'],
+                    },
+                    {
+                        model: User,
+                        as: 'likers',
+                        attributes: ['id'],
+                    },
+                ],
+                order: [['createdAt', 'DESC']],
+                attributes: [
+                    'id',
+                    'title',
+                    'slug',
+                    'html',
+                    'coverImage',
+                    'createdAt',
+                    'updatedAt',
+                ],
+            });
+
+            return res.json(
+                new JsonResult({
+                    success: true,
+                    data: changedPost,
+                }),
+            );
+        } catch (err) {
+            return next(err);
+        }
+    }
+
+    /**
+     * 글을 삭제합니다.
+     * ```
+     * DELETE:/api/me/post/:id
+     * ```
+     * @param req
+     * @param res
+     * @param next
+     */
+    private async deletePost(
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+    ): Promise<any> {
+        try {
+            const id = parseInt(req.params.id, 10) || -1;
+            const post = await Post.findOne({
+                where: { id: id, UserId: req.user.id },
+                include: [
+                    {
+                        model: User,
+                        as: 'user',
+                        attributes: defaultUserAttributes,
+                    },
+                    {
+                        model: Tag,
+                    },
+                    {
+                        model: Category,
+                    },
+                    {
+                        model: PostAccessLog,
+                        attributes: ['id'],
+                    },
+                    {
+                        model: Image,
+                        attributes: [
+                            'id',
+                            'src',
+                            'size',
+                            'fileName',
+                            'fileExtension',
+                            'contentType',
+                        ],
+                    },
+                    {
+                        model: Comment,
+                    },
+                    {
+                        model: User,
+                        as: 'likers',
+                        attributes: ['id'],
+                    },
+                ],
+                attributes: ['id', 'title', 'slug'],
+            });
+
+            if (!post) {
+                throw new HttpStatusError({
+                    code: 404,
+                    message: 'Could not find a post.',
+                });
+            }
+
+            const deletedPostId: number = post.id;
+
+            if (post.categories && post.categories.length > 0) {
+                await Promise.all(
+                    post.categories.map((x) => {
+                        return post.$remove('categories', x);
+                    }),
+                );
+            }
+            if (post.accessLogs && post.accessLogs.length > 0) {
+                await Promise.all(
+                    post.accessLogs.map((x) => {
+                        return post.$remove('accessLogs', x);
+                    }),
+                );
+            }
+            if (post.tags && post.tags.length > 0) {
+                await Promise.all(
+                    post.tags.map((x) => {
+                        return post.$remove('tags', x);
+                    }),
+                );
+            }
+            if (post.comments && post.comments.length > 0) {
+                await Promise.all(
+                    post.comments.map((x) => {
+                        return post.$remove('comments', x);
+                    }),
+                );
+            }
+
+            if (post.likers && post.likers.length > 0) {
+                await Promise.all(
+                    post.likers.map((x) => {
+                        post.$remove('likers', x);
+                    }),
+                );
+            }
+
+            await post.destroy();
+
+            return res.json(
+                new JsonResult({
+                    success: true,
+                    data: deletedPostId,
+                }),
+            );
+        } catch (err) {
+            return next(err);
+        }
+    }
+
     private async normalizeCategoryOrder(userId: number): Promise<void> {
         // normalize
         const categoriesSort = await Category.findAll({
@@ -1086,5 +1618,28 @@ export class MeController extends ControllerBase {
                 }),
             );
         }
+    }
+
+    /**
+     * html 문자열 입력에서 HTML TAG를 제거한 문자열을 가져옵니다.
+     * @param html
+     */
+    private stripHtml(html: string): string {
+        if (!html) {
+            return null;
+        }
+
+        return html.replace(/(<([^>]+)>)/gi, '');
+    }
+
+    /**
+     * 대상 문자열에서 발췌글을 가져옵니다.
+     *
+     * @param {string} 대상 문자열
+     *
+     * @returns {string} 지정된 길이의 발췌글
+     */
+    private getExcerpt(s: string): string {
+        return s.slice(0, EXCERPT_LENGTH);
     }
 }
