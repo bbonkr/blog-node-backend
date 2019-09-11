@@ -21,8 +21,8 @@ export class TagsController extends ControllerBase {
         return '/api/tags';
     }
     protected initializeRoutes(): void {
-        this.router.get('/', this.getTags);
-        this.router.get('/:tag/posts', this.getPosts);
+        this.router.get('/', this.getTags.bind(this));
+        this.router.get('/:tag/posts', this.getPosts.bind(this));
     }
 
     /**
@@ -32,7 +32,7 @@ export class TagsController extends ControllerBase {
      * ```
      * ```
      * querystring: {
-     *      pageToken?: number;
+     *      page?: number;
      *      limit?: number;
      *      keyword?: string;
      * }
@@ -46,16 +46,17 @@ export class TagsController extends ControllerBase {
         res: Response,
         next: NextFunction,
     ): Promise<any> {
+        const thisRef = this;
+
         try {
             const limit: number =
                 (req.query.limit && parseInt(req.query.limit, 10)) || 10;
             const keyword: string =
                 req.query.keyword && decodeURIComponent(req.query.keyword);
-            const pageToken: number =
-                (req.query.pageToken && parseInt(req.query.pageToken, 10)) || 0;
-            const skip: number = pageToken ? 1 : 0;
+            const page: number =
+                (req.query.page && parseInt(req.query.page, 10)) || 1;
 
-            let where: WhereOptions = {};
+            const where: WhereOptions = {};
             if (keyword) {
                 Object.assign(where, { name: { [Op.like]: `%${keyword}%` } });
             }
@@ -64,22 +65,6 @@ export class TagsController extends ControllerBase {
                 where: where,
                 attributes: ['id'],
             });
-
-            if (pageToken) {
-                const basisPost = await Post.findOne({
-                    where: {
-                        id: pageToken,
-                    },
-                });
-
-                if (basisPost) {
-                    where = {
-                        createdAt: {
-                            [Op.lt]: basisPost.createdAt,
-                        },
-                    };
-                }
-            }
 
             const tags = await Tag.findAll({
                 where: where,
@@ -91,7 +76,7 @@ export class TagsController extends ControllerBase {
                 ],
                 order: [['slug', 'ASC']],
                 limit: limit,
-                // offset: skip,
+                offset: thisRef.getOffset(count, page, limit),
                 attributes: ['id', 'name', 'slug'],
             });
 
@@ -116,7 +101,7 @@ export class TagsController extends ControllerBase {
      * ```
      * ```
      * queryString {
-     *      pageToken?: number;
+     *      page?: number;
      *      limit?: number;
      *      keyword?: string;
      * }
@@ -136,9 +121,7 @@ export class TagsController extends ControllerBase {
                 (req.query.limit && parseInt(req.query.limit, 10)) || 10;
             const keyword =
                 req.query.keyword && decodeURIComponent(req.query.keyword);
-            const pageToken =
-                (req.query.pageToken && parseInt(req.query.pageToken, 10)) || 0;
-            const skip = pageToken ? 1 : 0;
+            const page = (req.query.page && parseInt(req.query.page, 10)) || 0;
 
             const tagRef = await Tag.findOne({
                 where: { slug: tag },
@@ -181,26 +164,6 @@ export class TagsController extends ControllerBase {
                 attributes: ['id'],
             });
 
-            if (pageToken) {
-                const basisPost = await Post.findOne({
-                    where: {
-                        id: pageToken,
-                    },
-                });
-
-                if (basisPost) {
-                    Object.assign(where, {
-                        createdAt: {
-                            [Op.lt]: basisPost.createdAt,
-                        },
-                    });
-                }
-            }
-
-            // Object.assign(where, {
-            //     id: { [Op.in]: rows.map((r) => r.id) },
-            // });
-
             const posts = await Post.findAll({
                 where: where,
                 include: [
@@ -232,7 +195,7 @@ export class TagsController extends ControllerBase {
                 ],
                 order: [['createdAt', 'DESC']],
                 limit: limit,
-                // offset: skip,
+                offset: this.getOffset(count, page, limit),
                 attributes: [
                     'id',
                     'title',

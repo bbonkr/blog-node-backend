@@ -14,5 +14,13 @@ export abstract class ControllerBase implements IControllerBase {
         return this.router;
     }
 
+    protected getOffset(
+        total: number,
+        page: number = 1,
+        limit: number = 10,
+    ): number {
+        return (page - 1) * limit;
+    }
+
     protected abstract initializeRoutes(): void;
 }

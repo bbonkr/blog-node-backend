@@ -18,10 +18,9 @@ import { PostAccessLog } from '../models/PostAccessLog.model';
 import { IListResult } from '../typings/IListResult';
 import { uploadToDiskStorage } from '../middleware/uload';
 import { replaceAll, makeSlug } from '../helpers/stringHelper';
-import { UserLikePost } from '../models/UserLikePost.model';
 import { markdownConverter } from '../helpers/converter';
-import { IDictionary } from '../typings/IDictionary';
 import { IPostFormData } from '../typings/IPostFormData';
+import { tryParseInt } from '../lib/tryParseInt';
 
 export const EXCERPT_LENGTH: number = 200;
 
@@ -30,42 +29,46 @@ export class MeController extends ControllerBase {
         return '/api/me';
     }
     protected initializeRoutes(): void {
-        this.router.get('/', authWithJwt, this.getMyInfo);
+        this.router.get('/', authWithJwt, this.getMyInfo.bind(this));
 
-        this.router.get('/posts', authWithJwt, this.getPosts);
-        this.router.get('/post/:id', authWithJwt, this.getPost);
-        this.router.post('/post', authWithJwt, this.addPost);
-        this.router.patch('/post/:id', authWithJwt, this.updatePost);
-        this.router.delete('/post/:id', authWithJwt, this.deletePost);
+        this.router.get('/posts', authWithJwt, this.getPosts.bind(this));
+        this.router.get('/post/:id', authWithJwt, this.getPost.bind(this));
+        this.router.post('/post', authWithJwt, this.addPost.bind(this));
+        this.router.patch('/post/:id', authWithJwt, this.updatePost.bind(this));
+        this.router.delete(
+            '/post/:id',
+            authWithJwt,
+            this.deletePost.bind(this),
+        );
 
-        this.router.get('/media', authWithJwt, this.getFiles);
-        this.router.get('/files', authWithJwt, this.getFiles);
+        this.router.get('/media', authWithJwt, this.getFiles.bind(this));
+        this.router.get('/files', authWithJwt, this.getFiles.bind(this));
 
         this.router.post(
             '/media',
             authWithJwt,
             uploadToDiskStorage.array('files'),
-            this.uploadFiles,
+            this.uploadFiles.bind(this),
         );
 
         this.router.post(
             '/files',
             authWithJwt,
             uploadToDiskStorage.array('files'),
-            this.uploadFiles,
+            this.uploadFiles.bind(this),
         );
 
-        this.router.delete('/media', authWithJwt, this.deleteFiles);
-        this.router.delete('/files', authWithJwt, this.deleteFiles);
+        this.router.delete('/media', authWithJwt, this.deleteFiles.bind(this));
+        this.router.delete('/files', authWithJwt, this.deleteFiles.bind(this));
 
         this.router
-            .get('/category', authWithJwt, this.getCategories)
-            .get('/categories', authWithJwt, this.getCategories)
-            .post('/category', authWithJwt, this.addCategory)
-            .patch('/category', authWithJwt, this.updateCategory)
-            .delete('/category', authWithJwt, this.deleteCategory);
+            .get('/category', authWithJwt, this.getCategories.bind(this))
+            .get('/categories', authWithJwt, this.getCategories.bind(this))
+            .post('/category', authWithJwt, this.addCategory.bind(this))
+            .patch('/category', authWithJwt, this.updateCategory.bind(this))
+            .delete('/category', authWithJwt, this.deleteCategory.bind(this));
 
-        this.router.get('/liked', authWithJwt, this.getLikedPosts);
+        this.router.get('/liked', authWithJwt, this.getLikedPosts.bind(this));
     }
 
     /**
@@ -130,7 +133,7 @@ export class MeController extends ControllerBase {
      * ```
      * ```
      * querystring {
-     *      pageToken?: string; // 글 목록의 마지막 글의 식별자
+     *      page?: number;      // 페이지
      *      limit?: number;     // 가져올 글의 수
      *      keyword?: string;   // 검색어
      * }
@@ -147,10 +150,9 @@ export class MeController extends ControllerBase {
         try {
             const limit: number = parseInt(req.query.limit || '10', 10);
             const keyword: string = decodeURIComponent(req.query.keyword || '');
-            const pageToken = parseInt(req.query.pageToken || '0', 10);
-            const skip: number = pageToken ? 1 : 0;
+            const page = parseInt(req.query.page || '1', 10);
 
-            const where: WhereOptions = { UserId: req.user.id };
+            const where: WhereOptions = { userId: req.user.id };
 
             if (keyword) {
                 Object.assign(where, {
@@ -169,27 +171,6 @@ export class MeController extends ControllerBase {
                 where: where,
                 attributes: ['id'],
             });
-
-            if (pageToken) {
-                const basisPost = await Post.findOne({
-                    where: {
-                        id: pageToken,
-                    },
-                });
-
-                if (basisPost) {
-                    Object.assign(where, {
-                        createdAt: {
-                            [Sequelize.Op.lt]: basisPost.createdAt,
-                        },
-                    });
-                    // where = {
-                    //     createdAt: {
-                    //         [db.Sequelize.Op.lt]: basisPost.createdAt,
-                    //     },
-                    // };
-                }
-            }
 
             const posts = await Post.findAll({
                 where: where,
@@ -219,7 +200,7 @@ export class MeController extends ControllerBase {
                 ],
                 order: [['createdAt', 'DESC']],
                 limit: limit,
-                offset: skip,
+                offset: this.getOffset(count, page, limit),
                 attributes: [
                     'id',
                     'title',
@@ -263,7 +244,7 @@ export class MeController extends ControllerBase {
             const id = parseInt(req.params.id || '0', 10);
 
             const post = await Post.findOne({
-                where: { id: id, UserId: req.user.id },
+                where: { id: id, userId: req.user.id },
                 include: [
                     {
                         model: User,
@@ -324,7 +305,7 @@ export class MeController extends ControllerBase {
      * ```
      * ```
      * querystring: {
-     *      pageToken?: string;     // 글 목록의 마지막 글의 식별자
+     *      page?: number;          // 페이지
      *      limit?: number;         // 항목의 수
      *      keyword?: string;       // 검색어
      * }
@@ -339,9 +320,10 @@ export class MeController extends ControllerBase {
         next: express.NextFunction,
     ): Promise<any> {
         try {
-            const { pageToken, keyword, limit } = req.query;
-            const recordLimit = parseInt(limit, 10) || 10;
-            const skip = pageToken ? 1 : 0;
+            const page = tryParseInt(req.query.page, 10, 1);
+            const limit = tryParseInt(req.query.limit, 10, 10);
+            const keyword =
+                req.query.keyword && decodeURIComponent(req.query.keyword);
 
             const where: WhereOptions = { userId: req.user.id };
 
@@ -353,27 +335,16 @@ export class MeController extends ControllerBase {
                 });
             }
 
-            const { count } = await Image.findAndCountAll({ where: where });
-
-            if (pageToken) {
-                const id = parseInt(pageToken, 10) || 0;
-                const latestImage = await Image.findOne({
-                    where: { id: id },
-                });
-                if (latestImage) {
-                    Object.assign(where, {
-                        id: {
-                            [Sequelize.Op.lt]: latestImage.id,
-                        },
-                    });
-                }
-            }
+            const { count } = await Image.findAndCountAll({
+                where: where,
+                attributes: ['id'],
+            });
 
             const images = await Image.findAll({
                 where: where,
                 order: [['createdAt', 'DESC']],
-                limit: recordLimit,
-                offset: skip,
+                limit: limit,
+                offset: this.getOffset(count, page, limit),
                 attributes: [
                     'id',
                     'src',
@@ -424,8 +395,6 @@ export class MeController extends ControllerBase {
             const images = await Promise.all(
                 files.map(
                     (v: Express.Multer.File): Promise<Image> => {
-                        // console.log('file: ', v);
-
                         const filename = v.originalname;
                         const ext = path.extname(filename);
                         const basename = path.basename(filename, ext);
@@ -457,7 +426,7 @@ export class MeController extends ControllerBase {
                             fileExtension: ext,
                             size: v.size,
                             contentType: v.mimetype,
-                            UserId: req.user.id,
+                            userId: req.user.id,
                         });
                     },
                 ),
@@ -566,7 +535,7 @@ export class MeController extends ControllerBase {
      * ```
      * ```
      * querystring: {
-     *      pageToken?: number;     // 목록의 마지막 항목의 식별자
+     *      page?: number;          // 페이지
      *      limit?: number;         // 항목의 수
      *      keyword? string;        // 검색어
      * }
@@ -581,12 +550,12 @@ export class MeController extends ControllerBase {
         next: express.NextFunction,
     ): Promise<any> {
         try {
-            const pageToken: number = parseInt(req.query.pageToken || '0', 10);
-            const limit: number = parseInt(req.query.limit || '10', 10);
-            const keyword: string = decodeURIComponent(req.query.keyword) || '';
+            const page: number = tryParseInt(req.query.page, 10, 1);
+            const limit: number = tryParseInt(req.query.limit, 10, 10);
+            const keyword: string =
+                req.query.keyword && decodeURIComponent(req.query.keyword);
 
-            // const skip = pageToken ? 1 : 0;
-            const where: WhereOptions = { UserId: req.user.id };
+            const where: WhereOptions = { userId: req.user.id };
 
             if (keyword) {
                 Object.assign(where, {
@@ -596,23 +565,10 @@ export class MeController extends ControllerBase {
                 });
             }
 
-            const { count } = await Category.findAndCountAll({ where: where });
-
-            if (!!pageToken) {
-                const lastCategory = await Category.findOne({
-                    where: {
-                        userId: req.user.id,
-                        id: pageToken,
-                    },
-                });
-                if (!!lastCategory) {
-                    Object.assign(where, {
-                        ordinal: {
-                            [Sequelize.Op.gt]: lastCategory.ordinal,
-                        },
-                    });
-                }
-            }
+            const { count } = await Category.findAndCountAll({
+                where: where,
+                attributes: ['id'],
+            });
 
             const categories = await Category.findAll({
                 where: where,
@@ -628,7 +584,7 @@ export class MeController extends ControllerBase {
                 ],
                 order: [['ordinal', 'ASC']],
                 limit: limit,
-                // skip: skip,
+                offset: this.getOffset(count, page, limit),
             });
 
             return res.json(
@@ -709,7 +665,7 @@ export class MeController extends ControllerBase {
 
             const adjustOridnal = await Category.findAll({
                 where: {
-                    UserId: req.user.id,
+                    userId: req.user.id,
                     id: {
                         [Sequelize.Op.not]: addedCategory.id,
                     },
@@ -830,7 +786,7 @@ export class MeController extends ControllerBase {
 
             const adjustOridnal = await Category.findAll({
                 where: {
-                    UserId: req.user.id,
+                    userId: req.user.id,
                     id: {
                         [Sequelize.Op.not]: updatedCategory.id,
                     },
@@ -931,7 +887,7 @@ export class MeController extends ControllerBase {
      * ```
      * ```
      * querystring {
-     *      pageToken?: string;
+     *      page?: number;
      *      limmit?: number;
      *      keyword?: string;
      * }
@@ -946,32 +902,12 @@ export class MeController extends ControllerBase {
         next: express.NextFunction,
     ): Promise<any> {
         try {
-            const limit: number = parseInt(req.query.limit || '10', 10);
-            const keyword: string = decodeURIComponent(req.query.keyword) || '';
-            const pageToken: string = req.query.pageToken;
-            const skip: number = pageToken ? 1 : 0;
+            const page: number = tryParseInt(req.query.page, 10, 1);
+            const limit: number = tryParseInt(req.query.limit, 10, 10);
+            const keyword: string =
+                req.query.keyword && decodeURIComponent(req.query.keyword);
 
-            let pageTokenUserId = 0;
-            let pageTokenPostId = 0;
-
-            if (!!pageToken) {
-                pageToken.split('|').forEach((el, index) => {
-                    switch (index) {
-                        case 0:
-                            pageTokenUserId = parseInt(el || '0', 10);
-                            break;
-                        case 1:
-                            pageTokenPostId = parseInt(el || '0', 10);
-                            break;
-                        default:
-                            break;
-                    }
-                });
-            }
-
-            const where: WhereOptions = {
-                UserId: req.user.id,
-            };
+            const where: WhereOptions = {};
 
             if (keyword) {
                 Object.assign(where, {
@@ -986,89 +922,71 @@ export class MeController extends ControllerBase {
                 });
             }
 
-            if (pageToken) {
-                const basisPost = await UserLikePost.findOne({
-                    where: {
-                        userId: pageTokenUserId,
-                        postId: pageTokenPostId,
-                    },
-                    order: [['createdAt', 'DESC']],
-                });
-
-                if (basisPost) {
-                    Object.assign(where, {
-                        createdAt: {
-                            [Sequelize.Op.lt]: basisPost.createdAt,
-                        },
-                    });
-                    // where = {
-                    //     createdAt: {
-                    //         [db.Sequelize.Op.lt]: basisPost.createdAt,
-                    //     },
-                    // };
-                }
-            }
-
-            const me = await User.findOne({
-                where: { id: req.user.id },
-                include: [
-                    {
-                        model: Post,
-                        as: 'likedPosts',
-                    },
-                ],
-            });
-
-            const count = me.likedPosts.length;
-
-            const likePosts = await UserLikePost.findAll({
+            const { count } = await Post.findAndCountAll({
                 where: where,
                 include: [
                     {
-                        model: Post,
-                        include: [
-                            {
-                                model: User,
-                                as: 'user',
-                                attributes: defaultUserAttributes,
+                        model: User,
+                        as: 'likers',
+                        attributes: ['id'],
+                        through: {
+                            where: {
+                                userId: req.user.id,
                             },
-                            {
-                                model: Tag,
-                                attributes: ['id', 'name', 'slug'],
+                        },
+                        required: true, // inner join
+                    },
+                ],
+                attributes: ['id'],
+            });
+
+            const likePosts = await Post.findAll({
+                where: where,
+                include: [
+                    {
+                        model: User,
+                        as: 'user',
+                        attributes: defaultUserAttributes,
+                    },
+                    {
+                        model: Tag,
+                        attributes: ['id', 'name', 'slug'],
+                    },
+                    {
+                        model: Category,
+                        attributes: ['id', 'name', 'slug'],
+                    },
+                    {
+                        model: PostAccessLog,
+                        attributes: ['id'],
+                    },
+                    {
+                        model: User,
+                        as: 'likers',
+                        through: {
+                            where: {
+                                userId: req.user.id,
                             },
-                            {
-                                model: Category,
-                                attributes: ['id', 'name', 'slug'],
-                            },
-                            {
-                                model: PostAccessLog,
-                                attributes: ['id'],
-                            },
-                            {
-                                model: User,
-                                as: 'likers',
-                                attributes: ['id'],
-                            },
-                        ],
-                        attributes: [
-                            'id',
-                            'title',
-                            'slug',
-                            'excerpt',
-                            'coverImage',
-                            'createdAt',
-                        ],
-                        // as: 'LikePosts',
+                        },
+                        attributes: ['id'],
+                        required: true, // inner join
                     },
                 ],
                 order: [['createdAt', 'DESC']],
-                attributes: ['UserId', 'PostId', 'createdAt'],
                 limit: limit,
-                offset: skip,
+                offset: this.getOffset(count, page, limit),
+                attributes: [
+                    'id',
+                    'title',
+                    'slug',
+                    'excerpt',
+                    'coverImage',
+                    'createdAt',
+                ],
             });
 
             return res.json(
-                new JsonResult<IListResult<UserLikePost>>({
+                new JsonResult<IListResult<Post>>({
                     success: true,
                     data: {
                         records: likePosts,
@@ -1142,7 +1060,7 @@ export class MeController extends ControllerBase {
             const slugEdit = !!slug ? slug : makeSlug(title);
 
             const checkPost = await Post.findOne({
-                where: { slug: slug, UserId: req.user.id },
+                where: { slug: slug, userId: req.user.id },
             });
 
             if (checkPost) {
@@ -1161,7 +1079,7 @@ export class MeController extends ControllerBase {
                 text: text,
                 excerpt: this.getExcerpt(text),
                 coverImage: coverImage,
-                UserId: req.user.id,
+                userId: req.user.id,
             });
 
             if (categories && categories.length > 0) {
@@ -1348,7 +1266,7 @@ export class MeController extends ControllerBase {
             const checkPost = await Post.findOne({
                 where: {
                     slug: slug,
-                    UserId: req.user.id,
+                    userId: req.user.id,
                     id: { [Sequelize.Op.ne]: post.id },
                 },
                 attributes: ['id'],
@@ -1505,7 +1423,7 @@ export class MeController extends ControllerBase {
         try {
             const id = parseInt(req.params.id, 10) || -1;
             const post = await Post.findOne({
-                where: { id: id, UserId: req.user.id },
+                where: { id: id, userId: req.user.id },
                 include: [
                     {
                         model: User,
@@ -1607,7 +1525,7 @@ export class MeController extends ControllerBase {
     private async normalizeCategoryOrder(userId: number): Promise<void> {
         // normalize
         const categoriesSort = await Category.findAll({
-            where: { UserId: userId },
+            where: { userId: userId },
             order: [['ordinal', 'ASC']],
         });
 
