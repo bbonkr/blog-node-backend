@@ -16,23 +16,22 @@ import {
 import { HttpStatusError } from '../typings/HttpStatusError';
 const Op = Sequelize.Op;
 
-export class PostsController extends ControllerBase {
+export class TagsController extends ControllerBase {
     public getPath(): string {
-        return '/api/posts';
+        return '/api/tags';
     }
-
     protected initializeRoutes(): void {
-        this.router.get('/', this.getPosts);
-        // this.router.get('/tags/:tag', this.getTagPosts);
+        this.router.get('/', this.getTags);
+        this.router.get('/:tag/posts', this.getPosts);
     }
 
     /**
-     * 글 목록을 가져옵니다.
+     * 태그 목록을 가져옵니다.
      * ```
-     * GET:/api/posts
+     * GET:/api/tags
      * ```
      * ```
-     * querystring {
+     * querystring: {
      *      pageToken?: number;
      *      limit?: number;
      *      keyword?: string;
@@ -42,7 +41,7 @@ export class PostsController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async getPosts(
+    private async getTags(
         req: Request,
         res: Response,
         next: NextFunction,
@@ -57,21 +56,11 @@ export class PostsController extends ControllerBase {
             const skip: number = pageToken ? 1 : 0;
 
             let where: WhereOptions = {};
-
             if (keyword) {
-                Object.assign(where, {
-                    [Op.or]: [
-                        { title: { [Op.like]: `%${keyword}%` } },
-                        {
-                            text: {
-                                [Op.like]: `%${keyword}%`,
-                            },
-                        },
-                    ],
-                });
+                Object.assign(where, { name: { [Op.like]: `%${keyword}%` } });
             }
 
-            const { count } = await Post.findAndCountAll({
+            const { count } = await Tag.findAndCountAll({
                 where: where,
                 attributes: ['id'],
             });
@@ -92,51 +81,25 @@ export class PostsController extends ControllerBase {
                 }
             }
 
-            const posts = await Post.findAll({
+            const tags = await Tag.findAll({
                 where: where,
                 include: [
                     {
-                        model: User,
-                        as: 'user',
-                        attributes: defaultUserAttributes,
-                    },
-                    {
-                        model: Tag,
-                        attributes: ['id', 'slug', 'name'],
-                    },
-                    {
-                        model: Category,
-                        attributes: ['id', 'slug', 'name', 'ordinal'],
-                    },
-                    {
-                        model: PostAccessLog,
-                        attributes: ['id'],
-                    },
-                    {
-                        model: User,
-                        as: 'likers',
-                        attributes: ['id'],
+                        model: Post,
+                        attributes: ['id', 'slug'],
                     },
                 ],
-                order: [['createdAt', 'DESC']],
+                order: [['slug', 'ASC']],
                 limit: limit,
-                offset: skip,
-                attributes: [
-                    'id',
-                    'title',
-                    'slug',
-                    'excerpt',
-                    'coverImage',
-                    'createdAt',
-                    'updatedAt',
-                ],
+                // offset: skip,
+                attributes: ['id', 'name', 'slug'],
             });
 
             return res.json(
-                new JsonResult<IListResult<Post>>({
+                new JsonResult<IListResult<Tag>>({
                     success: true,
                     data: {
-                        records: posts,
+                        records: tags,
                         total: count,
                     },
                 }),
@@ -147,15 +110,22 @@ export class PostsController extends ControllerBase {
     }
 
     /**
-     * 태그에 해당하는 글 목록을 가져옵니다. ==> /api/tags/:tag/posts 로 이동
+     * 태그에 해당하는 글 목록을 가져옵니다.
      * ```
-     * GET:/api/posts/tags/:tag
+     * GET:/api/tags/:tag/posts
+     * ```
+     * ```
+     * queryString {
+     *      pageToken?: number;
+     *      limit?: number;
+     *      keyword?: string;
+     * }
      * ```
      * @param req
      * @param res
      * @param next
      */
-    private async getTagPosts(
+    private async getPosts(
         req: Request,
         res: Response,
         next: NextFunction,
@@ -221,7 +191,7 @@ export class PostsController extends ControllerBase {
                 if (basisPost) {
                     Object.assign(where, {
                         createdAt: {
-                            [Sequelize.Op.lt]: basisPost.createdAt,
+                            [Op.lt]: basisPost.createdAt,
                         },
                     });
                 }
@@ -259,7 +229,7 @@ export class PostsController extends ControllerBase {
                 ],
                 order: [['createdAt', 'DESC']],
                 limit: limit,
-                offset: skip,
+                // offset: skip,
                 attributes: [
                     'id',
                     'title',

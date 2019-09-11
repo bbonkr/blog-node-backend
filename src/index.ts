@@ -4,6 +4,8 @@ import { PostsController } from './controllers/Posts.controller';
 import { UsersController } from './controllers/Users.controller';
 import { MeController } from './controllers/Me.controller';
 import { AccountController } from './controllers/Account.controller';
+import { TagsController } from './controllers/Tags.controller';
+import { SampleController } from './controllers/Sample.controller';
 
 dotenv.config();
 
@@ -18,9 +20,11 @@ const app: App = new App(
     [
         /* 컨트롤러 */
         new AccountController(),
-        new PostsController(),
-        new UsersController(),
         new MeController(),
+        new PostsController(),
+        new SampleController(),
+        new TagsController(),
+        new UsersController(),
     ],
     port,
 );
