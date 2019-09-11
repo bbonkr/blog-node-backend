@@ -424,6 +424,9 @@ export class UsersController extends ControllerBase {
                     {
                         model: Category,
                         attributes: ['id', 'slug', 'name'],
+                        where: {
+                            id: foundCategory.id,
+                        },
                     },
                     {
                         model: PostAccessLog,

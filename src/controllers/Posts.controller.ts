@@ -182,7 +182,7 @@ export class PostsController extends ControllerBase {
                 });
             }
 
-            let where: WhereOptions = {};
+            const where: WhereOptions = {};
 
             if (keyword) {
                 Object.assign(where, {
@@ -241,6 +241,9 @@ export class PostsController extends ControllerBase {
                     },
                     {
                         model: Tag,
+                        where: {
+                            id: tagRef.id,
+                        },
                         attributes: ['id', 'name', 'slug'],
                     },
                     {

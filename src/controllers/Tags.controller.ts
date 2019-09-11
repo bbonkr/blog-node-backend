@@ -152,7 +152,7 @@ export class TagsController extends ControllerBase {
                 });
             }
 
-            let where: WhereOptions = {};
+            const where: WhereOptions = {};
 
             if (keyword) {
                 Object.assign(where, {
@@ -212,6 +212,9 @@ export class TagsController extends ControllerBase {
                     {
                         model: Tag,
                         attributes: ['id', 'name', 'slug'],
+                        where: {
+                            id: tagRef.id,
+                        },
                     },
                     {
                         model: Category,
