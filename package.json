@@ -66,15 +66,16 @@
         "@types/passport": "^1.0.1",
         "@types/passport-jwt": "^3.0.1",
         "@types/passport-local": "^1.0.33",
+        "@types/showdown": "^1.9.3",
         "@types/validator": "^10.11.3",
         "@types/webpack": "^4.39.1",
+        "mem": ">=4.0.0",
         "nodemon": "^1.19.2",
         "sequelize-cli": "^5.5.0",
         "ts-loader": "^6.0.4",
         "tslint": "^5.19.0",
         "typescript": "^3.6.2",
         "webpack": "^4.39.3",
-        "webpack-cli": "^3.3.8",
-        "mem": ">=4.0.0"
+        "webpack-cli": "^3.3.8"
     }
 }
