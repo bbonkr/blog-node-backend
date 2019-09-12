@@ -3,6 +3,7 @@ import Sequelize from 'sequelize';
 import { ControllerBase } from '../typings/ControllerBase';
 import passport from 'passport';
 import bcrypt from 'bcrypt';
+import fs from 'fs';
 import jsonwebtoken from 'jsonwebtoken';
 import { jwtOptions } from '../config/jwtOptions';
 import { JsonResult } from '../typings/JsonResult';
@@ -17,6 +18,11 @@ import moment from 'moment';
 import { defaultUserAttributes } from '../typings/defaultUserAttributes';
 import { authWithJwt } from '../middleware/authWithJwt';
 import { ResetPasswordCode } from '../models/ResetPasswordCode.model';
+import { Category } from '../models/Category.model';
+import { Post } from '../models/Post.model';
+import { Image } from '../models/Image.model';
+import { Comment } from '../models/Comment.model';
+import { UserLikePost } from '../models/UserLikePost.model';
 
 export class AccountController extends ControllerBase {
     public getPath(): string {
@@ -42,6 +48,12 @@ export class AccountController extends ControllerBase {
         this.router.post(
             '/resetpasswordrequest',
             this.resetPasswordRequest.bind(this),
+        );
+        this.router.post('/resetpassword', this.resetPassword.bind(this));
+        this.router.post(
+            '/unregister',
+            authWithJwt,
+            this.unregister.bind(this),
         );
     }
 
@@ -729,12 +741,219 @@ export class AccountController extends ControllerBase {
         }
     }
 
+    /**
+     * 비밀번호 초기화
+     * ```
+     * POST:/api/account/resetpassword
+     * ```
+     * ```
+     * body {
+     *  email: string;
+     *  code: string;
+     *  password: string;
+     *  newPassword: string;
+     * }
+     * ```
+     * @param req
+     * @param res
+     * @param next
+     */
     private async resetPassword(
         req: Request,
         res: Response,
         next: NextFunction,
     ): Promise<any> {
         try {
+            const { email, code, password, newPassword } = req.body;
+
+            if (!email || email.trim().length === 0) {
+                throw new HttpStatusError({
+                    code: 400,
+                    message: 'Email field value is required.',
+                });
+            }
+
+            if (!code || code.trim().length === 0) {
+                throw new HttpStatusError({
+                    code: 400,
+                    message: 'Code field value is required.',
+                });
+            }
+
+            if (!password || password.trim().length === 0) {
+                throw new HttpStatusError({
+                    code: 400,
+                    message: 'Password field value is required.',
+                });
+            }
+
+            if (!newPassword || newPassword.trim().length === 0) {
+                throw new HttpStatusError({
+                    code: 400,
+                    message: 'New password field value is required.',
+                });
+            }
+
+            const resetPasswordCode = await ResetPasswordCode.findOne({
+                where: {
+                    email: email,
+                    code: code,
+                },
+            });
+
+            if (!resetPasswordCode) {
+                throw new HttpStatusError({
+                    code: 404,
+                    message: 'Could not found a request to reset a password.',
+                });
+            }
+
+            if (resetPasswordCode.expired < new Date()) {
+                throw new HttpStatusError({
+                    code: 400,
+                    message: 'This request has been expired.',
+                });
+            }
+
+            const result = await bcrypt.compare(
+                password,
+                resetPasswordCode.password,
+            );
+
+            if (!result) {
+                throw new HttpStatusError({
+                    code: 400,
+                    message:
+                        'Check your request information that reset a password.',
+                });
+            }
+
+            const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+
+            const user = await User.findOne({
+                where: { id: resetPasswordCode.userId },
+            });
+
+            const updatedUser = await user.update({
+                password: hashedNewPassword,
+            });
+
+            // 정상적으로 처리되면 비밀번호 재설정 요청은 만료시킵니다.
+            await resetPasswordCode.update({
+                expire: new Date(),
+            });
+
+            return res.json(
+                new JsonResult({
+                    success: true,
+                    data: 'Password changed.',
+                }),
+            );
+        } catch (err) {
+            return next(err);
+        }
+    }
+
+    /**
+     * 회원탈퇴
+     * ```
+     * POST:/api/account/unregister
+     * ```
+     * ```
+     * body {
+     *  password: string;
+     * }
+     * ```
+     * @param req
+     * @param res
+     * @param next
+     */
+    private async unregister(
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ): Promise<any> {
+        try {
+            const { password } = req.body;
+
+            const me = await User.findOne({
+                where: { id: req.user.id },
+                include: [
+                    { model: Image },
+                    { model: Post, as: 'posts' },
+                    { model: Category },
+                    { model: Comment },
+                    { model: UserVerifyCode },
+                    { model: ResetPasswordCode },
+                    { model: UserLikePost, as: 'likedPosts' },
+                ],
+            });
+
+            const passwordResult = await bcrypt.compare(
+                password.trim(),
+                me.password,
+            );
+
+            if (!passwordResult) {
+                throw new HttpStatusError({
+                    code: 400,
+                    message: 'Password does not match.',
+                });
+            }
+
+            if (me.verifyCodes && me.verifyCodes.length > 0) {
+                await Promise.all(me.verifyCodes.map((v) => v.destroy()));
+            }
+
+            if (me.resetPasswordCodes && me.resetPasswordCodes.length > 0) {
+                await Promise.all(
+                    me.resetPasswordCodes.map((v) => v.destroy()),
+                );
+            }
+
+            if (me.likedPosts && me.likedPosts.length > 0) {
+                await Promise.all(me.likedPosts.map((v) => v.destroy()));
+            }
+
+            if (me.comments && me.comments.length > 0) {
+                await Promise.all(me.comments.map((v) => v.destroy()));
+            }
+
+            if (me.categories && me.categories.length > 0) {
+                await Promise.all(me.categories.map((v) => v.destroy()));
+            }
+
+            if (me.images && me.images.length > 0) {
+                const files: string[] = [];
+                await Promise.all(
+                    me.images.map((v) => {
+                        files.push(v.path);
+                        return v.destroy();
+                    }),
+                );
+
+                if (files && files.length > 0) {
+                    files.forEach((v) => {
+                        if (fs.existsSync(v)) {
+                            // 파일이 있는 경우만 삭제합니다.
+                            fs.unlinkSync(v);
+                        }
+                    });
+                }
+            }
+
+            if (me.posts && me.posts.length > 0) {
+                await Promise.all(me.posts.map((v) => v.destroy()));
+            }
+
+            await me.destroy();
+
+            return res.send(
+                new JsonResult({
+                    success: true,
+                    data: 'Thanks for using. See you next time.',
+                }),
+            );
         } catch (err) {
             return next(err);
         }

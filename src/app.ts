@@ -11,6 +11,7 @@ import DatabaseSessionStore from './passport/databaseSessionStore';
 import { IControllerBase } from './typings/IControllerBase';
 import { errorLogger, errorJsonResult } from './middleware/errorProcess';
 import { PassportInitializer } from './passport/PassportInitializer';
+import { appOptions } from './config/appOptions';
 
 export class App {
     public port: number;
@@ -69,7 +70,7 @@ export class App {
 
         this.app.use(
             cors({
-                origin: 'http://localhost:3000',
+                origin: appOptions.corsOrigin,
                 credentials: true,
             }),
         );
@@ -84,6 +85,7 @@ export class App {
                 cookie: {
                     httpOnly: true,
                     secure: false, // https 사용시 true
+                    domain: appOptions.cookieDomain,
                 },
                 store: dbSessionStore,
             }),

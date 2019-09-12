@@ -21,8 +21,7 @@ import { replaceAll, makeSlug } from '../helpers/stringHelper';
 import { markdownConverter } from '../helpers/converter';
 import { IPostFormData } from '../typings/IPostFormData';
 import { tryParseInt } from '../lib/tryParseInt';
-
-export const EXCERPT_LENGTH: number = 200;
+import { getExcerpt, EXCERPT_LENGTH, stripHtml } from '../lib/post.helper';
 
 export class MeController extends ControllerBase {
     public getPath(): string {
@@ -1056,7 +1055,7 @@ export class MeController extends ControllerBase {
             }
 
             const html = markdownConverter().makeHtml(markdown);
-            const text = this.stripHtml(html);
+            const text = stripHtml(html);
             const slugEdit = !!slug ? slug : makeSlug(title);
 
             const checkPost = await Post.findOne({
@@ -1077,7 +1076,7 @@ export class MeController extends ControllerBase {
                 markdown: markdown,
                 html: html,
                 text: text,
-                excerpt: this.getExcerpt(text),
+                excerpt: getExcerpt(text, EXCERPT_LENGTH),
                 coverImage: coverImage,
                 userId: req.user.id,
             });
@@ -1260,7 +1259,7 @@ export class MeController extends ControllerBase {
             }
 
             const html = markdownConverter().makeHtml(markdown);
-            const text = this.stripHtml(html);
+            const text = stripHtml(html);
             const slugEdit = !!slug ? slug : makeSlug(title);
 
             const checkPost = await Post.findOne({
@@ -1287,7 +1286,7 @@ export class MeController extends ControllerBase {
                     markdown: markdown,
                     html: html,
                     text: text,
-                    excerpt: this.getExcerpt(text),
+                    excerpt: getExcerpt(text, EXCERPT_LENGTH),
                     coverImage: coverImage,
                 },
                 {
@@ -1536,28 +1535,5 @@ export class MeController extends ControllerBase {
                 }),
             );
         }
-    }
-
-    /**
-     * html 문자열 입력에서 HTML TAG를 제거한 문자열을 가져옵니다.
-     * @param html
-     */
-    private stripHtml(html: string): string {
-        if (!html) {
-            return null;
-        }
-
-        return html.replace(/(<([^>]+)>)/gi, '');
-    }
-
-    /**
-     * 대상 문자열에서 발췌글을 가져옵니다.
-     *
-     * @param {string} 대상 문자열
-     *
-     * @returns {string} 지정된 길이의 발췌글
-     */
-    private getExcerpt(s: string): string {
-        return s.slice(0, EXCERPT_LENGTH);
     }
 }
