@@ -729,6 +729,17 @@ export class AccountController extends ControllerBase {
         }
     }
 
+    private async resetPassword(
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ): Promise<any> {
+        try {
+        } catch (err) {
+            return next(err);
+        }
+    }
+
     /**
      * 전자우편 확인을 위한 메시지를 전송합니다.
      * @param req 요청
