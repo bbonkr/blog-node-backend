@@ -18,6 +18,7 @@ import { Session } from '../passport/Session.model';
 
 const env = process.env.NODE_ENV || 'development';
 const config: IDatabaseConfigItem = sequelizeConfig[env];
+const isTest = env === 'test';
 
 const sequelizeOptions: SequelizeOptions = {
     ...config,
@@ -37,6 +38,9 @@ const sequelizeOptions: SequelizeOptions = {
         UserLikePost,
         UserVerifyCode,
     ],
+    // logging?: boolean | ((sql: string, timing?: number) => void);
+    // logging: (sql: string, timing?: number): void => {},
+    logging: !isTest,
 };
 
 export const sequelize = new Sequelize(sequelizeOptions);

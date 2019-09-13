@@ -23,11 +23,19 @@ export class App {
     public port: number;
     public readonly cookieName: string = process.env.COOKIE_NAME;
 
+    private readonly isTest: boolean = process.env.NODE_ENV === 'test';
     private app: express.Application;
 
     constructor(port?: number) {
         this.app = express();
         this.port = port || 3000;
+
+        if (this.isTest) {
+            // 콘솔출력을 제거합니다.
+            console.log = (message: any, ...optionalPrameters: any[]): void => {
+                //
+            };
+        }
     }
 
     public async initializeExpress(): Promise<App> {
@@ -138,7 +146,10 @@ export class App {
             },
         );
 
-        this.app.use(errorLogger);
+        if (!this.isTest) {
+            this.app.use(errorLogger);
+        }
+
         this.app.use(errorJsonResult);
 
         console.log('[APP] Router ready!');

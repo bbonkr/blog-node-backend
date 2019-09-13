@@ -9,7 +9,7 @@
     "scripts": {
         "sequelize": "node_modules/.bin/sequelize",
         "test": "cross-env NODE_ENV=test jest",
-        "coverage": "cross-env NODE_ENV=test jest --converage",
+        "coverage": "cross-env NODE_ENV=test jest --coverage",
         "lint": "tslint src/**/*.ts{,x} --config ./tslint.json --fix",
         "lint:dev": "cross-env NODE_ENV=development npm run lint",
         "lint:prod": "cross-env NODE_ENV=production npm run lint",

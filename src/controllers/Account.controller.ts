@@ -195,6 +195,15 @@ export class AccountController extends ControllerBase {
                 verifyEmailUrl,
             } = req.body;
 
+            this.validateRequired(email, 'Email is required.');
+            this.validateRequired(username, 'Username is required.');
+            this.validateRequired(password, 'Password is required');
+            this.validateRequired(displayName, 'Display name is required.');
+            this.validateRequired(
+                verifyEmailUrl,
+                'Verify email url is required.',
+            );
+
             let user: User;
 
             user = await User.findOne({
