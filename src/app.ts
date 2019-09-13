@@ -12,6 +12,12 @@ import { IControllerBase } from './typings/IControllerBase';
 import { errorLogger, errorJsonResult } from './middleware/errorProcess';
 import { PassportInitializer } from './passport/PassportInitializer';
 import { appOptions } from './config/appOptions';
+import { PostsController } from './controllers/Posts.controller';
+import { UsersController } from './controllers/Users.controller';
+import { MeController } from './controllers/Me.controller';
+import { AccountController } from './controllers/Account.controller';
+import { TagsController } from './controllers/Tags.controller';
+import { SampleController } from './controllers/Sample.controller';
 
 export class App {
     public port: number;
@@ -19,14 +25,22 @@ export class App {
 
     private app: express.Application;
 
-    constructor(controllers: IControllerBase[], port?: number) {
+    constructor(port?: number) {
         this.app = express();
         this.port = port || 3000;
+    }
 
-        this.initializeDatabaseConnection();
+    public async initializeExpress(): Promise<App> {
+        await this.initializeDatabaseConnection();
         this.initializePassport();
         this.initializeMiddlewares();
-        this.initializeControllers(controllers);
+        this.initializeControllers();
+
+        return this;
+    }
+
+    public getExpressApp(): express.Application {
+        return this.app;
     }
 
     public listen(): void {
@@ -35,26 +49,26 @@ export class App {
         });
     }
 
-    private initializeDatabaseConnection() {
-        sequelize
-            .sync({
-                // If force is true, each DAO will do DROP TABLE IF EXISTS ...,
-                // before it tries to create its own table
-                force: false,
-                // If alter is true, each DAO will do ALTER TABLE ... CHANGE ... Alters tables to fit models.
-                // Not recommended for production use.
-                // Deletes data in columns that were removed or had their type changed in the model.
-                alter: false,
-            })
-            .then((_) => {
-                console.log('[APP] Database ready!');
-            });
+    private async initializeDatabaseConnection(): Promise<void> {
+        await sequelize.sync({
+            // If force is true, each DAO will do DROP TABLE IF EXISTS ...,
+            // before it tries to create its own table
+            force: false,
+            // If alter is true, each DAO will do ALTER TABLE ... CHANGE ... Alters tables to fit models.
+            // Not recommended for production use.
+            // Deletes data in columns that were removed or had their type changed in the model.
+            alter: false,
+        });
+
+        console.log('[APP] Database ready!');
     }
 
     private initializePassport() {
         const passportInitializer = new PassportInitializer();
 
         passportInitializer.init();
+
+        console.log('[APP] Passport ready!');
     }
 
     private initializeMiddlewares(): void {
@@ -93,9 +107,21 @@ export class App {
 
         this.app.use(passport.initialize());
         this.app.use(passport.session());
+
+        console.log('[APP] Middlewares ready!');
     }
 
-    private initializeControllers(controllers: IControllerBase[]) {
+    private initializeControllers() {
+        const controllers: IControllerBase[] = [
+            /* 컨트롤러 */
+            new AccountController(),
+            new MeController(),
+            new PostsController(),
+            new SampleController(),
+            new TagsController(),
+            new UsersController(),
+        ];
+
         controllers.forEach((controller, index) => {
             this.app.use(controller.getPath(), controller.getRouter());
         });
@@ -114,5 +140,7 @@ export class App {
 
         this.app.use(errorLogger);
         this.app.use(errorJsonResult);
+
+        console.log('[APP] Router ready!');
     }
 }

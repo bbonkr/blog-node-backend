@@ -2,6 +2,12 @@ import sendgrid from '@sendgrid/mail';
 import { MailData } from '@sendgrid/helpers/classes/mail';
 
 export const sendMail = async (message: MailData): Promise<boolean> => {
+    const isTest = process.env.NODE_ENV === 'test';
+    if (isTest) {
+        // by pass when UNIT TEST
+        return false;
+    }
+
     // using Twilio SendGrid's v3 Node.js Library
     // https://github.com/sendgrid/sendgrid-nodejs
     const key = process.env.SENDGRID_API_KEY;

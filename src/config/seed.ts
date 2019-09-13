@@ -25,7 +25,7 @@ export const seed = async () => {
             name: 'test',
             slug: 'test',
             ordinal: 1,
-            UserId: testUser.id,
+            userId: testUser.id,
         });
 
         const testTag = await Tag.create({
@@ -87,7 +87,7 @@ Nunc rutrum sapien at eleifend interdum. Duis tortor sapien, imperdiet imperdiet
                 html: html,
                 text: text,
                 excerpt: excerpt,
-                UserId: testUser.id,
+                userId: testUser.id,
                 createdAt: new Date().setHours(i),
                 isPublished: true,
             });

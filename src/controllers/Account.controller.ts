@@ -679,7 +679,7 @@ export class AccountController extends ControllerBase {
             const hashedPassword = await bcrypt.hash(newPassword, 12);
 
             const deleteCodes = await ResetPasswordCode.findAll({
-                where: { UserId: user.id },
+                where: { userId: user.id },
             });
 
             if (!!deleteCodes && deleteCodes.length > 0) {
@@ -691,7 +691,7 @@ export class AccountController extends ControllerBase {
                 code: hashedCode,
                 password: hashedPassword,
                 expire: expire,
-                UserId: user.id,
+                userId: user.id,
             });
 
             const url = `${resetPasswordUrl}?email=${newResetPasswordCode.email}&code=${newResetPasswordCode.code}`;
@@ -984,7 +984,7 @@ export class AccountController extends ControllerBase {
         const url = `${returnUrl}?email=${hashedEmail}&code=${hashedCode}`;
 
         const deleteCodes = await UserVerifyCode.findAll({
-            where: { UserId: user.id },
+            where: { userId: user.id },
         });
 
         if (!!deleteCodes && deleteCodes.length > 0) {
@@ -996,7 +996,7 @@ export class AccountController extends ControllerBase {
             email: hashedEmail,
             code: hashedCode,
             expire: expire,
-            UserId: user.id,
+            userId: user.id,
         });
 
         if (!newVerifyCode) {

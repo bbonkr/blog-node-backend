@@ -86,7 +86,7 @@ export class UsersController extends ControllerBase {
                 });
             }
 
-            const where: WhereOptions = { UserId: foundUser.id };
+            const where: WhereOptions = { userId: foundUser.id };
 
             if (keyword) {
                 Object.assign(where, {
@@ -370,7 +370,7 @@ export class UsersController extends ControllerBase {
                 });
             }
 
-            const where: WhereOptions = { UserId: foundUser.id };
+            const where: WhereOptions = { userId: foundUser.id };
 
             if (keyword) {
                 Object.assign(where, {
