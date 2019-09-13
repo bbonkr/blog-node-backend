@@ -27,6 +27,12 @@ export const normalizeReturnUrl = (
     return url;
 };
 
+/**
+ * 문자열을 슬러그로 사용할 수 있는 문자열로 변경합니다.
+ * TODO: 공백 문자만 - 문자로 변경합니다.
+ * 다른 경우도 처리할 수 있게 정규식을 작성해야 합니다.
+ * @param text
+ */
 export const makeSlug = (text: string): string => {
     if (!text) {
         return null;
@@ -35,6 +41,10 @@ export const makeSlug = (text: string): string => {
     return text.replace(/\s+/g, '-').toLowerCase();
 };
 
+/**
+ *
+ * @param num 숫자를 1,000 자리표시자를 추가해서 출력합니다.
+ */
 export const formatNumber = (num: number): string => {
     let tempNum = 0;
     if (typeof num === 'string') {
@@ -64,6 +74,12 @@ export const formatNumber = (num: number): string => {
     return n;
 };
 
+/**
+ * 대상 문자열에서 지정된 문자열을 찾아서 변경합니다.
+ * @param fromText
+ * @param toFind
+ * @param thenReplace
+ */
 export const replaceAll = (
     fromText: string,
     toFind: string,
@@ -78,9 +94,40 @@ export const replaceAll = (
     return fromText.replace(regEx, thenReplace);
 };
 
+/**
+ * 사용자 계정이름을 표준화합니다.
+ * 클라이언트에서 요청할 때, @username 형식으로 전송합니다.
+ * @param username
+ */
 export const normalizeUsername = (username: string = ''): string => {
     if (username && username.length > 1 && username.indexOf('@') >= 0) {
         return username.substring(1);
     }
     return username;
+};
+
+/**
+ * 임의의 문자열을 만듭니다.
+ * @param len
+ */
+export const randomString = (len: number = 13): string => {
+    const buf: string[] = [];
+    const chars: string =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charlen: number = chars.length;
+
+    for (let i: number = 0; i < len; ++i) {
+        buf.push(chars[getRandomInt(0, charlen - 1)]);
+    }
+
+    return buf.join('');
+};
+
+/**
+ * 임의의 숫자를 가져옵니다.
+ * @param min
+ * @param max
+ */
+export const getRandomInt = (min: number = 0, max: number = 10): number => {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 };

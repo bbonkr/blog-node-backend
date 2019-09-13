@@ -1,39 +1,39 @@
-const db = require('../models');
-const bcrypt = require('bcrypt');
-const {
-    markdownConverter,
-    stripHtml,
-    getExcerpt,
-} = require('../routes/helper');
+import { User } from '../models/User.model';
+import bcrypt from 'bcrypt';
+import { Category } from '../models/Category.model';
+import { Tag } from '../models/Tag.model';
+import { markdownConverter } from '../helpers/converter';
+import { stripHtml, getExcerpt, EXCERPT_LENGTH } from '../lib/post.helper';
+import { Post } from '../models/Post.model';
 
-exports.seed = async () => {
+export const seed = async () => {
     console.log('start to insert seed data.');
 
-    const hasUser = await db.User.findAll({
+    const hasUser = await User.findAll({
         attributes: ['id'],
     });
 
     if (!hasUser || hasUser.length === 0) {
-        const testUser = await db.User.create({
-            username: 'bbonkr',
+        const testUser = await User.create({
+            username: 'admin',
             displayName: '구본철',
-            email: 'bbon@bbon.kr',
-            password: await bcrypt.hash('1234', 12),
+            email: 'app@bbon.kr',
+            password: await bcrypt.hash('>>p@ssp0rd<<', 12),
         });
 
-        const testCategory = await db.Category.create({
+        const testCategory = await Category.create({
             name: 'test',
             slug: 'test',
             ordinal: 1,
-            UserId: testUser.id,
+            userId: testUser.id,
         });
 
-        const testTag = await db.Tag.create({
+        const testTag = await Tag.create({
             name: 'test',
             slug: 'test',
         });
 
-        const testKrTag = await db.Tag.create({
+        const testKrTag = await Tag.create({
             name: '테스트',
             slug: '테스트',
         });
@@ -76,9 +76,9 @@ Nam risus est, volutpat sit amet mauris et, imperdiet dapibus nisl. In elementum
 
 Nunc rutrum sapien at eleifend interdum. Duis tortor sapien, imperdiet imperdiet varius a, placerat vel metus. Fusce ac dui diam. Donec vulputate volutpat neque vel mollis. Vivamus pretium mi risus, in mollis tortor semper eu. Vestibulum eget venenatis tellus, quis porta neque. Ut laoreet orci ut dolor ultricies pretium. Morbi efficitur tellus vitae justo porta sollicitudin. Fusce ultrices eros nec convallis faucibus. Vivamus posuere velit non aliquet mollis.
 `;
-            const html = markdownConverter.makeHtml(markdown);
+            const html = markdownConverter().makeHtml(markdown);
             const text = stripHtml(html);
-            const excerpt = getExcerpt(text);
+            const excerpt = getExcerpt(text, EXCERPT_LENGTH);
 
             samplePosts.push({
                 title: `Test ${i + 1}`,
@@ -87,22 +87,27 @@ Nunc rutrum sapien at eleifend interdum. Duis tortor sapien, imperdiet imperdiet
                 html: html,
                 text: text,
                 excerpt: excerpt,
-                UserId: testUser.id,
+                userId: testUser.id,
                 createdAt: new Date().setHours(i),
                 isPublished: true,
             });
         }
 
         // 포스트 추가
-        const posts = await db.Post.bulkCreate(samplePosts);
+        const posts = await Post.bulkCreate(samplePosts);
 
         // 분류 추가
-        await testCategory.addPosts(posts);
+        await Promise.all(posts.map((p) => testCategory.$add('posts', p)));
 
         // 태그 추가
-        await testTag.addPosts(posts);
+        await Promise.all(posts.map((p) => testTag.$add('posts', p)));
 
-        await testKrTag.addPosts(posts.filter(v => v.id % 2 === 0));
+        await Promise.all(
+            posts
+                .filter((v) => v.id % 2 === 0)
+                .map((p) => testKrTag.$add('posts', p)),
+        );
+
         console.log('insert seed data completed.');
     } else {
         console.log('User is exists. DO NOT SEED DATA.');

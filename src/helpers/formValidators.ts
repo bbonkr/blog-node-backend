@@ -1,62 +1,77 @@
-import Validator from './validator';
+import { Validator } from './validator';
+import { IValidationResult } from '../typings/IValidationResult';
+import { ValidationResult } from '../typings/ValidationResult';
+import { IFormValidationResult } from '../typings/IFormValidationResult';
+import { FormValidationResult } from '../typings/FormValidationResult';
+import { ISignUpFormValue } from '../typings/ISignUpFormValue';
 
-const USERNAME_MIN_LENGTH = 3;
-const DISPLAYNAME_MIN_LENGTH = 3;
-const PASSWORD_LENGTH = 4;
+export const USERNAME_MIN_LENGTH = 3;
+export const DISPLAYNAME_MIN_LENGTH = 3;
+export const PASSWORD_LENGTH = 4;
 
-export const signUpFormValidator = {
+export class SignUpFormValidator {
     /**
      * 비밀번호 유효성 검사를 실행합니다.
      * @param {string} password
      */
-    validatePassword(password) {
+    public validatePassword(password: string): IValidationResult {
         if (!password || password.length === 0) {
-            return {
+            return new ValidationResult({
                 valid: false,
                 message: 'Please input your current password.',
-            };
+            });
         }
 
         if (password.length < PASSWORD_LENGTH) {
-            return {
+            return new ValidationResult({
                 valid: false,
                 message: `Please input your password more than ${PASSWORD_LENGTH} characters.`,
-            };
+            });
         }
 
-        return {
-            valid: true,
-            message: '',
-        };
-    },
+        return ValidationResult.ValidResult;
+    }
 
-    checkEmail(formValues) {
+    /**
+     * 전자우편주소 유효성 검사
+     * @param formValues
+     */
+    public checkEmail(formValues: ISignUpFormValue): IValidationResult {
         const { email } = formValues;
         if (!email || email.trim().length === 0) {
-            return {
+            return new ValidationResult({
                 valid: false,
                 message: 'Please input your email address',
-            };
+            });
         }
 
         if (!Validator.email(email)) {
-            return {
+            return new ValidationResult({
                 valid: false,
                 message: 'Please input a valid formatted email address',
-            };
+            });
         }
 
-        return {
-            valid: true,
-            message: '',
-        };
-    },
-    checkPassword(formValues) {
+        return ValidationResult.ValidResult;
+    }
+
+    /**
+     * 비밀번호 유효성 검사
+     * @param formValues
+     */
+    public checkPassword(formValues: ISignUpFormValue): IValidationResult {
         const { password } = formValues;
 
         return this.validatePassword(password.trim());
-    },
-    checkPasswordConfirm(formValues) {
+    }
+
+    /**
+     * 비밀번호 확인 유효성 검사
+     * @param formValues
+     */
+    public checkPasswordConfirm(
+        formValues: ISignUpFormValue,
+    ): IValidationResult {
         const { password, passwordConfirm } = formValues;
 
         const result = this.validatePassword(passwordConfirm.trim());
@@ -66,73 +81,76 @@ export const signUpFormValidator = {
         }
 
         if (password.trim() !== passwordConfirm.trim()) {
-            return {
+            return new ValidationResult({
                 valid: false,
                 message: 'Please input same as password.',
-            };
+            });
         }
 
-        return {
-            valid: true,
-            message: '',
-        };
-    },
+        return ValidationResult.ValidResult;
+    }
 
-    checkUsername(formValues) {
+    /**
+     * 계정이름 유효성 검사
+     * @param formValues
+     */
+    public checkUsername(formValues: ISignUpFormValue): IValidationResult {
         const { username } = formValues;
         if (!username || username.trim().length === 0) {
-            return {
+            return new ValidationResult({
                 valid: false,
                 message: 'Please input your username',
-            };
+            });
         }
 
         if (!/^[a-z][a-z0-9_-]+[a-z0-9]$/i.test(username)) {
-            return {
+            return new ValidationResult({
                 valid: false,
                 message:
                     'Please input your username with combining alphabet (lower-case), number, dash(-) and underscore(_). It should start with alphabet character. and it should end with alphabet or number character.',
-            };
+            });
         }
 
         if (username.trim().length < USERNAME_MIN_LENGTH) {
-            return {
+            return new ValidationResult({
                 valid: false,
                 message: `Please input your user name longer than ${USERNAME_MIN_LENGTH}`,
-            };
+            });
         }
 
-        return {
-            valid: true,
-            message: '',
-        };
-    },
+        return ValidationResult.ValidResult;
+    }
 
-    checkDisplayName(formValues) {
+    /**
+     * 출력 이름 유효성 검사
+     * @param formValues
+     */
+    public checkDisplayName(formValues: ISignUpFormValue): IValidationResult {
         const { displayName } = formValues;
 
         if (!displayName || displayName.trim().length === 0) {
-            return {
+            return new ValidationResult({
                 valid: false,
                 message: 'Please input your display name.',
-            };
+            });
         }
 
         if (displayName.trim().length < DISPLAYNAME_MIN_LENGTH) {
-            return {
+            return new ValidationResult({
                 valid: false,
                 message: `Please input your display name longer than ${DISPLAYNAME_MIN_LENGTH}`,
-            };
+            });
         }
 
-        return {
-            valid: true,
-            message: '',
-        };
-    },
+        return ValidationResult.ValidResult;
+    }
 
-    validate(formValues) {
-        const results = [];
+    /**
+     * 폼 입력값의 유효성 검사를 실행합니다.
+     * @param formValues
+     */
+    public validate(formValues: ISignUpFormValue): IFormValidationResult {
+        const results: IValidationResult[] = [];
 
         results.push(this.checkEmail(formValues));
         results.push(this.checkPassword(formValues));
@@ -140,18 +158,8 @@ export const signUpFormValidator = {
         results.push(this.checkUsername(formValues));
         results.push(this.checkDisplayName(formValues));
 
-        let valid = true;
-        const messages = [];
-        results.forEach(v => {
-            valid = valid && v.valid;
-            if (!v.valid) {
-                messages.push(v.message);
-            }
+        return new FormValidationResult({
+            validationResults: results,
         });
-
-        return {
-            valid: valid,
-            messages: messages,
-        };
-    },
-};
+    }
+}

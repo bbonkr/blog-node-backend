@@ -8,7 +8,7 @@ export class SampleController extends ControllerBase {
     }
 
     protected initializeRoutes(): void {
-        this.router.get('/', this.get);
+        this.router.get('/', this.get.bind(this));
     }
 
     private get(

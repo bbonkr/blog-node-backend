@@ -16,22 +16,91 @@ import {
 import { HttpStatusError } from '../typings/HttpStatusError';
 const Op = Sequelize.Op;
 
-export class PostsController extends ControllerBase {
+export class TagsController extends ControllerBase {
     public getPath(): string {
-        return '/api/posts';
+        return '/api/tags';
     }
-
     protected initializeRoutes(): void {
-        this.router.get('/', this.getPosts.bind(this));
+        this.router.get('/', this.getTags.bind(this));
+        this.router.get('/:tag/posts', this.getPosts.bind(this));
     }
 
     /**
-     * 글 목록을 가져옵니다.
+     * 태그 목록을 가져옵니다.
      * ```
-     * GET:/api/posts
+     * GET:/api/tags
      * ```
      * ```
-     * querystring {
+     * querystring: {
+     *      page?: number;
+     *      limit?: number;
+     *      keyword?: string;
+     * }
+     * ```
+     * @param req
+     * @param res
+     * @param next
+     */
+    private async getTags(
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ): Promise<any> {
+        const thisRef = this;
+
+        try {
+            const limit: number =
+                (req.query.limit && parseInt(req.query.limit, 10)) || 10;
+            const keyword: string =
+                req.query.keyword && decodeURIComponent(req.query.keyword);
+            const page: number =
+                (req.query.page && parseInt(req.query.page, 10)) || 1;
+
+            const where: WhereOptions = {};
+            if (keyword) {
+                Object.assign(where, { name: { [Op.like]: `%${keyword}%` } });
+            }
+
+            const { count } = await Tag.findAndCountAll({
+                where: where,
+                attributes: ['id'],
+            });
+
+            const tags = await Tag.findAll({
+                where: where,
+                include: [
+                    {
+                        model: Post,
+                        attributes: ['id', 'slug'],
+                    },
+                ],
+                order: [['slug', 'ASC']],
+                limit: limit,
+                offset: thisRef.getOffset(count, page, limit),
+                attributes: ['id', 'name', 'slug'],
+            });
+
+            return res.json(
+                new JsonResult<IListResult<Tag>>({
+                    success: true,
+                    data: {
+                        records: tags,
+                        total: count,
+                    },
+                }),
+            );
+        } catch (err) {
+            return next(err);
+        }
+    }
+
+    /**
+     * 태그에 해당하는 글 목록을 가져옵니다.
+     * ```
+     * GET:/api/tags/:tag/posts
+     * ```
+     * ```
+     * queryString {
      *      page?: number;
      *      limit?: number;
      *      keyword?: string;
@@ -47,12 +116,24 @@ export class PostsController extends ControllerBase {
         next: NextFunction,
     ): Promise<any> {
         try {
-            const limit: number =
+            const tag = req.params.tag && decodeURIComponent(req.params.tag);
+            const limit =
                 (req.query.limit && parseInt(req.query.limit, 10)) || 10;
-            const keyword: string =
+            const keyword =
                 req.query.keyword && decodeURIComponent(req.query.keyword);
-            const page: number =
-                (req.query.page && parseInt(req.query.page, 10)) || 1;
+            const page = (req.query.page && parseInt(req.query.page, 10)) || 0;
+
+            const tagRef = await Tag.findOne({
+                where: { slug: tag },
+                attributes: ['id', 'name', 'slug'],
+            });
+
+            if (!tagRef) {
+                throw new HttpStatusError({
+                    code: 404,
+                    message: `Could not find tag. [${tag}]`,
+                });
+            }
 
             const where: WhereOptions = {};
 
@@ -69,8 +150,17 @@ export class PostsController extends ControllerBase {
                 });
             }
 
-            const { count } = await Post.findAndCountAll({
+            const { count, rows } = await Post.findAndCountAll({
                 where: where,
+                include: [
+                    {
+                        model: Tag,
+                        where: {
+                            id: tagRef.id,
+                        },
+                        attributes: ['id'],
+                    },
+                ],
                 attributes: ['id'],
             });
 
@@ -84,11 +174,14 @@ export class PostsController extends ControllerBase {
                     },
                     {
                         model: Tag,
-                        attributes: ['id', 'slug', 'name'],
+                        attributes: ['id', 'name', 'slug'],
+                        where: {
+                            id: tagRef.id,
+                        },
                     },
                     {
                         model: Category,
-                        attributes: ['id', 'slug', 'name', 'ordinal'],
+                        attributes: ['id', 'name', 'slug'],
                     },
                     {
                         model: PostAccessLog,
@@ -115,11 +208,12 @@ export class PostsController extends ControllerBase {
             });
 
             return res.json(
-                new JsonResult<IListResult<Post>>({
+                new JsonResult<IListResultWithInformation<Post>>({
                     success: true,
                     data: {
                         records: posts,
                         total: count,
+                        tag: tagRef,
                     },
                 }),
             );

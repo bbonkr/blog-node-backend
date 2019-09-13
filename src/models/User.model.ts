@@ -48,9 +48,9 @@ export class User extends Model<User> {
     @Column(DataType.BOOLEAN)
     public isEmailConfirmed!: boolean;
 
-    @AllowNull(false)
+    @AllowNull(true)
     @Column(DataType.STRING(500))
-    public photo!: string;
+    public photo?: string;
 
     @HasMany(() => Category)
     public categories!: Category[];

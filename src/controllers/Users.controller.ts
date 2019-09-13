@@ -23,25 +23,37 @@ export class UsersController extends ControllerBase {
     }
 
     protected initializeRoutes(): void {
-        this.router.get('/:user/posts', this.getUserPosts);
-        this.router.get('/:user/posts/:post', this.getUserPost);
-        this.router.get('/:user/categories', this.getUserCategories);
+        this.router.get('/:user/posts', this.getUserPosts.bind(this));
+        this.router.get('/:user/posts/:post', this.getUserPost.bind(this));
+        this.router.get('/:user/categories', this.getUserCategories.bind(this));
         this.router.get(
             '/:user/categories/:category',
-            this.getUserCategoryPosts,
+            this.getUserCategoryPosts.bind(this),
         );
-        this.router.post('/:user/posts/:post/like', authWithJwt, this.likePost);
+        this.router.post(
+            '/:user/posts/:post/like',
+            authWithJwt,
+            this.likePost.bind(this),
+        );
         this.router.delete(
             '/:user/posts/:post/like',
             authWithJwt,
-            this.unlikePost,
+            this.unlikePost.bind(this),
         );
     }
 
     /**
      * 사용자의 글을 가져옵니다.
-     * GET: /api/users/:user/posts
-     *
+     * ```
+     * GET:/api/users/:user/posts
+     * ```
+     * ```
+     * queryString {
+     *      page?: number;
+     *      limit?: number;
+     *      keyword?: string;
+     * }
+     * ```
      * @param req
      * @param res
      * @param next
@@ -57,8 +69,7 @@ export class UsersController extends ControllerBase {
             const limit: number = parseInt(req.query.limit || '10', 10);
             const keyword: string =
                 req.query.keyword && decodeURIComponent(req.query.keyword);
-            const pageToken: number = parseInt(req.query.pageToken || '-1', 10);
-            const skip: number = pageToken ? 1 : 0;
+            const page: number = parseInt(req.query.page || '1', 10);
 
             const username = normalizeUsername(user);
 
@@ -75,7 +86,7 @@ export class UsersController extends ControllerBase {
                 });
             }
 
-            const where: WhereOptions = { UserId: foundUser.id };
+            const where: WhereOptions = { userId: foundUser.id };
 
             if (keyword) {
                 Object.assign(where, {
@@ -94,22 +105,6 @@ export class UsersController extends ControllerBase {
                 where: where,
                 attributes: ['id'],
             });
-
-            if (pageToken) {
-                const basisPost = await Post.findOne({
-                    where: {
-                        id: pageToken,
-                    },
-                });
-
-                if (basisPost) {
-                    Object.assign(where, {
-                        createdAt: {
-                            [Sequelize.Op.lt]: basisPost.createdAt,
-                        },
-                    });
-                }
-            }
 
             const posts = await Post.findAll({
                 where: where,
@@ -139,7 +134,7 @@ export class UsersController extends ControllerBase {
                 ],
                 order: [['createdAt', 'DESC']],
                 limit: limit,
-                offset: skip,
+                offset: this.getOffset(count, page, limit),
                 attributes: [
                     'id',
                     'title',
@@ -195,7 +190,6 @@ export class UsersController extends ControllerBase {
                     code: 400,
                     message: 'Invalid request: Unknow post.',
                 });
-                // return res.status(401).send('유효한 요청이 아닙니다.');
             }
             const username = normalizeUsername(user);
 
@@ -205,7 +199,6 @@ export class UsersController extends ControllerBase {
             });
 
             if (!foundUser) {
-                // return res.status(404).send(`Could not find user [@${user}]`);
                 throw new HttpStatusError({
                     code: 404,
                     message: `Could not find user [@${user}]`,
@@ -287,7 +280,16 @@ export class UsersController extends ControllerBase {
 
     /**
      * 사용자의 분류 목록을 가져옵니다. - 구현되지 않음
+     * ```
      * GET:/api/users/:user/categories
+     * ```
+     * ```
+     * queryString {
+     *      page?: number;
+     *      limit?: number;
+     *      keyword?: string;
+     * }
+     * ```
      * @param req
      * @param res
      * @param next
@@ -311,7 +313,16 @@ export class UsersController extends ControllerBase {
 
     /**
      * 사용자 분류의 글 목록을 가져옵니다.
+     * ```
      * GET:/api/users/:user/categories/:category
+     * ```
+     * ```
+     * queryString {
+     *      page?: number;
+     *      limit?: number;
+     *      keyword?: string;
+     * }
+     * ```
      * @param req
      * @param res
      * @param next
@@ -328,8 +339,7 @@ export class UsersController extends ControllerBase {
             const limit: number = parseInt(req.query.limit || '10', 10);
             const keyword: string =
                 req.query.keyword && decodeURIComponent(req.query.keyword);
-            const pageToken = parseInt(req.query.pageToken || '-1', 10);
-            const skip: number = pageToken ? 1 : 0;
+            const page = parseInt(req.query.page || '1', 10);
 
             const username = normalizeUsername(user);
 
@@ -360,7 +370,7 @@ export class UsersController extends ControllerBase {
                 });
             }
 
-            const where: WhereOptions = { UserId: foundUser.id };
+            const where: WhereOptions = { userId: foundUser.id };
 
             if (keyword) {
                 Object.assign(where, {
@@ -387,28 +397,6 @@ export class UsersController extends ControllerBase {
                 ],
             });
 
-            if (pageToken) {
-                const basisPost = await Post.findOne({
-                    where: {
-                        id: pageToken,
-                    },
-                });
-
-                if (basisPost) {
-                    Object.assign(where, {
-                        createdAt: {
-                            [Sequelize.Op.lt]: basisPost.createdAt,
-                        },
-                    });
-                }
-            }
-
-            // Object.assign(where, {
-            //     id: {
-            //         [Sequelize.Op.in]: rows.map((r) => r.id),
-            //     },
-            // });
-
             const posts = await Post.findAll({
                 where: where,
                 include: [
@@ -424,6 +412,9 @@ export class UsersController extends ControllerBase {
                     {
                         model: Category,
                         attributes: ['id', 'slug', 'name'],
+                        where: {
+                            id: foundCategory.id,
+                        },
                     },
                     {
                         model: PostAccessLog,
@@ -437,7 +428,7 @@ export class UsersController extends ControllerBase {
                 ],
                 order: [['createdAt', 'DESC']],
                 limit: limit,
-                offset: skip,
+                offset: this.getOffset(count, page, limit),
                 attributes: [
                     'id',
                     'title',
@@ -467,7 +458,9 @@ export class UsersController extends ControllerBase {
 
     /**
      * 글 좋아요
+     * ```
      * POST:/api/users/:user/posts/:post/like
+     * ```
      * @param req
      * @param res
      * @param next
@@ -566,7 +559,9 @@ export class UsersController extends ControllerBase {
 
     /**
      * 글 좋아요 취소
+     * ```
      * DELETE:/api/users/:user/posts/:post/like
+     * ```
      * @param req
      * @param res
      * @param next
