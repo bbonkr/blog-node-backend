@@ -69,7 +69,7 @@ export class Post extends Model<Post> {
     @AllowNull(false)
     @Default(false)
     @Column(DataType.BOOLEAN)
-    public isPrivate!: string;
+    public isPrivate!: boolean;
 
     @AllowNull(true)
     @Default(false)
