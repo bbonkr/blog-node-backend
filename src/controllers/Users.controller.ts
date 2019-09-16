@@ -27,7 +27,7 @@ export class UsersController extends ControllerBase {
         this.router.get('/:user/posts/:post', this.getUserPost.bind(this));
         this.router.get('/:user/categories', this.getUserCategories.bind(this));
         this.router.get(
-            '/:user/categories/:category',
+            '/:user/categories/:category/posts',
             this.getUserCategoryPosts.bind(this),
         );
         this.router.post(
@@ -75,7 +75,7 @@ export class UsersController extends ControllerBase {
 
             const foundUser = await User.findOne({
                 where: { username: username },
-                attributes: ['id'],
+                attributes: ['id', 'username', 'displayName'],
             });
 
             if (!foundUser) {
@@ -147,11 +147,12 @@ export class UsersController extends ControllerBase {
             });
 
             return res.json(
-                new JsonResult<IListResult<Post>>({
+                new JsonResult<IListResultWithInformation<Post>>({
                     success: true,
                     data: {
                         records: posts,
                         total: count,
+                        user: foundUser,
                     },
                 }),
             );

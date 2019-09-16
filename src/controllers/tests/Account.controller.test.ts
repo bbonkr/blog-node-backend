@@ -15,6 +15,7 @@ beforeAll(async () => {
 
 afterAll(() => {
     // 데이터 초기화
+    supertest(app).removeAllListeners();
 });
 
 describe('Account', () => {
