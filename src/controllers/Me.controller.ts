@@ -68,6 +68,8 @@ export class MeController extends ControllerBase {
             .delete('/category', authWithJwt, this.deleteCategory.bind(this));
 
         this.router.get('/liked', authWithJwt, this.getLikedPosts.bind(this));
+
+        this.router.get('/tags', authWithJwt, this.getTags.bind(this));
     }
 
     /**
@@ -1514,6 +1516,57 @@ export class MeController extends ControllerBase {
                 new JsonResult({
                     success: true,
                     data: deletedPostId,
+                }),
+            );
+        } catch (err) {
+            return next(err);
+        }
+    }
+
+    /**
+     * 작성글의 태그 목록을 가져옵니다.
+     * ```
+     * GET:/api/me/tags
+     * ```
+     * @param req
+     * @param res
+     * @param next
+     */
+    private async getTags(
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+    ) {
+        try {
+            // const { page, limit, keyword } = req.query;
+            // const pageValue: number = tryParseInt(page, 10, 1);
+            // const limitValue: number = tryParseInt(limit, 10, 10);
+            // const keywordValue: string = keyword && decodeURIComponent(keyword);
+
+            // 페이징?
+            // 클라이언트에서 입력시 필터?
+            const { count, rows } = await Tag.findAndCountAll({
+                include: [
+                    {
+                        model: Post,
+                        where: {
+                            userId: req.user.id,
+                        },
+                        required: true, // inner join
+                        include: ['id'],
+                    },
+                ],
+                order: [['name', 'ASC']],
+                attributes: ['id', 'name', 'slug'],
+            });
+
+            return res.json(
+                new JsonResult<IListResult<Tag>>({
+                    success: true,
+                    data: {
+                        records: rows,
+                        total: count,
+                    },
                 }),
             );
         } catch (err) {

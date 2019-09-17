@@ -18,6 +18,7 @@ import { MeController } from './controllers/Me.controller';
 import { AccountController } from './controllers/Account.controller';
 import { TagsController } from './controllers/Tags.controller';
 import { SampleController } from './controllers/Sample.controller';
+import { StatController } from './controllers/Stat.controller';
 
 export class App {
     public port: number;
@@ -128,6 +129,7 @@ export class App {
             new SampleController(),
             new TagsController(),
             new UsersController(),
+            new StatController(),
         ];
 
         controllers.forEach((controller, index) => {
