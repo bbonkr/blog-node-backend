@@ -103,6 +103,7 @@ export class MeController extends ControllerBase {
                 include: [
                     {
                         model: Post,
+                        as: 'posts',
                         attributes: ['id'],
                     },
                 ],
@@ -584,8 +585,8 @@ export class MeController extends ControllerBase {
                     },
                 ],
                 order: [['ordinal', 'ASC']],
-                limit: limit,
-                offset: this.getOffset(count, page, limit),
+                limit: limit || count,
+                offset: this.getOffset(count, page, limit || count),
             });
 
             return res.json(
@@ -1553,7 +1554,7 @@ export class MeController extends ControllerBase {
                             userId: req.user.id,
                         },
                         required: true, // inner join
-                        include: ['id'],
+                        attributes: ['id'],
                     },
                 ],
                 order: [['name', 'ASC']],
