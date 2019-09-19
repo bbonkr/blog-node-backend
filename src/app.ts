@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import expressSession from 'express-session';
 import morgan from 'morgan';
 import cors from 'cors';
+import path from 'path';
 import bcrypt from 'bcrypt';
 import { sequelize } from './models';
 import passport = require('passport');
@@ -84,12 +85,16 @@ export class App {
         const dbSessionStore = new DatabaseSessionStore({
             expiration: 1000 * 60 * 60 * 24 * 90,
         });
+        const uploadDir = path.join(process.cwd(), 'uploads');
+        // console.info('[APP]: upload dir ==> ', uploadDir);
+        // console.info('[APP]: current path ==> ', process.cwd());
+
+        this.app.set('upload-dir', express.static(uploadDir));
 
         this.app.use(morgan('dev'));
-
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
-        this.app.use('/', express.static('uploads'));
+        this.app.use('/uploads', express.static(uploadDir));
 
         this.app.use(
             cors({

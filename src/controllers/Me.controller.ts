@@ -57,15 +57,27 @@ export class MeController extends ControllerBase {
             this.uploadFiles.bind(this),
         );
 
-        this.router.delete('/media', authWithJwt, this.deleteFiles.bind(this));
-        this.router.delete('/files', authWithJwt, this.deleteFiles.bind(this));
+        this.router.delete(
+            '/media/:id',
+            authWithJwt,
+            this.deleteFiles.bind(this),
+        );
+        this.router.delete(
+            '/files/:id',
+            authWithJwt,
+            this.deleteFiles.bind(this),
+        );
 
         this.router
             .get('/category', authWithJwt, this.getCategories.bind(this))
             .get('/categories', authWithJwt, this.getCategories.bind(this))
             .post('/category', authWithJwt, this.addCategory.bind(this))
-            .patch('/category', authWithJwt, this.updateCategory.bind(this))
-            .delete('/category', authWithJwt, this.deleteCategory.bind(this));
+            .patch('/category/:id', authWithJwt, this.updateCategory.bind(this))
+            .delete(
+                '/category:/id',
+                authWithJwt,
+                this.deleteCategory.bind(this),
+            );
 
         this.router.get('/liked', authWithJwt, this.getLikedPosts.bind(this));
 
@@ -407,7 +419,7 @@ export class MeController extends ControllerBase {
                         );
                         const savedFileDir = path.dirname(v.path);
                         const serverRootDir = path.normalize(
-                            path.join(__dirname, '..'),
+                            path.join(process.cwd()),
                         );
                         const savedFileRelativeDir = path.relative(
                             serverRootDir,
@@ -423,7 +435,7 @@ export class MeController extends ControllerBase {
 
                         return Image.create({
                             src: src,
-                            path: `${path.join(serverRootDir, v.path)}`,
+                            path: v.path,
                             fileName: basename,
                             fileExtension: ext,
                             size: v.size,
@@ -486,8 +498,10 @@ export class MeController extends ControllerBase {
 
             const foundImage = await Image.findOne({
                 where: {
-                    userId: req.user.id,
-                    id: id,
+                    [Sequelize.Op.and]: {
+                        userId: req.user.id,
+                        id: id,
+                    },
                 },
                 attributes: [
                     'id',
