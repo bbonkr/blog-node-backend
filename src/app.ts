@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import expressSession from 'express-session';
 import morgan from 'morgan';
 import cors from 'cors';
+import path from 'path';
 import bcrypt from 'bcrypt';
 import { sequelize } from './models';
 import passport = require('passport');
@@ -18,6 +19,7 @@ import { MeController } from './controllers/Me.controller';
 import { AccountController } from './controllers/Account.controller';
 import { TagsController } from './controllers/Tags.controller';
 import { SampleController } from './controllers/Sample.controller';
+import { StatController } from './controllers/Stat.controller';
 
 export class App {
     public port: number;
@@ -52,7 +54,7 @@ export class App {
     }
 
     public listen(): void {
-        this.app.listen(this.port, () => {
+        this.app.listen(this.port, '0.0.0.0', () => {
             console.log(`[APP] App is running on the port ${this.port}`);
         });
     }
@@ -83,12 +85,16 @@ export class App {
         const dbSessionStore = new DatabaseSessionStore({
             expiration: 1000 * 60 * 60 * 24 * 90,
         });
+        const uploadDir = path.join(process.cwd(), 'uploads');
+        // console.info('[APP]: upload dir ==> ', uploadDir);
+        // console.info('[APP]: current path ==> ', process.cwd());
+
+        this.app.set('upload-dir', express.static(uploadDir));
 
         this.app.use(morgan('dev'));
-
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
-        this.app.use('/', express.static('uploads'));
+        this.app.use('/uploads', express.static(uploadDir));
 
         this.app.use(
             cors({
@@ -128,6 +134,7 @@ export class App {
             new SampleController(),
             new TagsController(),
             new UsersController(),
+            new StatController(),
         ];
 
         controllers.forEach((controller, index) => {

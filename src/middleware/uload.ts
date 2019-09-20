@@ -1,3 +1,4 @@
+import express from 'express';
 import multer from 'multer';
 import moment from 'moment';
 import path from 'path';
@@ -6,14 +7,15 @@ import fs from 'fs';
 export const uploadToDiskStorage = multer({
     storage: multer.diskStorage({
         destination: (
-            req: Express.Request,
+            req: express.Request,
             file: Express.Multer.File,
             callback: (error: Error | null, destination: string) => void,
         ): void => {
             // 파일 저장 경로
+            const uploadDir: string = path.join(process.cwd(), 'uploads');
             const mm = moment(Date.now()).format('MM');
             const yyyy = moment(Date.now()).format('YYYY');
-            const dest = path.join('uploads', `${req.user.id}`, yyyy, mm);
+            const dest = path.join(uploadDir, `${req.user.id}`, yyyy, mm);
 
             // synchronous
             const existsDir = fs.existsSync(dest);

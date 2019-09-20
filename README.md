@@ -26,3 +26,26 @@ Sequelize 로 ORM을 사용하고, 대상 데이터베이스는 MariaDB를 사�
 ![ERD](./erd/blog.png)
 
 > 다이어그램은 [vuerd-front](https://github.com/vuerd/vuerd-front) 로 작성되었습니다.
+
+## Docker
+
+도커 이미지를 빌드합니다.
+
+```bash
+$ docker build --tag bbonkr/blog-service-backend:1.0.0 .
+```
+
+환경 변수
+
+> .env.sample 파일 참조
+
+-   SITE_NAME
+-   COOKIE_SECRET
+-   JWT_SECRET
+-   JWT_ISSUER
+-   JWT_AUDIENCE
+-   DB_HOST
+-   DB_PORT
+-   DB_DATABASE
+-   DB_USERNAME
+-   DB_PASSWORD

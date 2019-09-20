@@ -121,7 +121,7 @@ export class TagsController extends ControllerBase {
                 (req.query.limit && parseInt(req.query.limit, 10)) || 10;
             const keyword =
                 req.query.keyword && decodeURIComponent(req.query.keyword);
-            const page = (req.query.page && parseInt(req.query.page, 10)) || 0;
+            const page = (req.query.page && parseInt(req.query.page, 10)) || 1;
 
             const tagRef = await Tag.findOne({
                 where: { slug: tag },
@@ -159,6 +159,7 @@ export class TagsController extends ControllerBase {
                             id: tagRef.id,
                         },
                         attributes: ['id'],
+                        required: true,
                     },
                 ],
                 attributes: ['id'],
@@ -178,6 +179,7 @@ export class TagsController extends ControllerBase {
                         where: {
                             id: tagRef.id,
                         },
+                        required: true,
                     },
                     {
                         model: Category,

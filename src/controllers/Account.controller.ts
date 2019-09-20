@@ -40,13 +40,13 @@ export class AccountController extends ControllerBase {
         );
         this.router.patch('/info', authWithJwt, this.updateInfo.bind(this));
         this.router.post(
-            '/sendverifyemail',
+            '/requestverifyemail',
             authWithJwt,
-            this.sendVerifyEmailMessage.bind(this),
+            this.requestVerifyEmailMessage.bind(this),
         );
         this.router.post('/verifyemail', this.verifyEmail.bind(this));
         this.router.post(
-            '/resetpasswordrequest',
+            '/requestresetpassword',
             this.resetPasswordRequest.bind(this),
         );
         this.router.post('/resetpassword', this.resetPassword.bind(this));
@@ -91,24 +91,26 @@ export class AccountController extends ControllerBase {
 
                 try {
                     // const user = await findUserById(user.id);
-                    const signOptions = {
-                        expiresIn: '7d',
-                        issuer: jwtOptions.issuer,
-                        audience: jwtOptions.audience,
-                        subject: 'userInfo',
-                    };
+                    // const signOptions = {
+                    //     expiresIn: '7d',
+                    //     issuer: jwtOptions.issuer,
+                    //     audience: jwtOptions.audience,
+                    //     subject: 'userInfo',
+                    // };
 
-                    const payload = {
-                        id: user.id,
-                        username: user.username,
-                        displayName: user.displayName,
-                        email: user.email,
-                    };
-                    const token = jsonwebtoken.sign(
-                        payload,
-                        jwtOptions.secret,
-                        signOptions,
-                    );
+                    // const payload = {
+                    //     id: user.id,
+                    //     username: user.username,
+                    //     displayName: user.displayName,
+                    //     email: user.email,
+                    // };
+                    // const token = jsonwebtoken.sign(
+                    //     payload,
+                    //     jwtOptions.secret,
+                    //     signOptions,
+                    // );
+
+                    const token = this.generateToken(user);
 
                     return res.json(
                         new JsonResult({
@@ -158,7 +160,7 @@ export class AccountController extends ControllerBase {
                 }),
             );
         } catch (e) {
-            console.error(e);
+            // console.error(e);
             next(e);
         }
     }
@@ -244,12 +246,17 @@ export class AccountController extends ControllerBase {
                 attributes: defaultUserAttributes,
             });
 
+            const token = this.generateToken(me);
+
             await this.sendVerifyEmail(req, me, verifyEmailUrl);
 
             return res.json(
                 new JsonResult({
                     success: true,
-                    data: me,
+                    data: {
+                        user: me,
+                        token: token,
+                    },
                 }),
             );
         } catch (err) {
@@ -481,7 +488,7 @@ export class AccountController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async sendVerifyEmailMessage(
+    private async requestVerifyEmailMessage(
         req: Request,
         res: Response,
         next: NextFunction,
@@ -507,7 +514,7 @@ export class AccountController extends ControllerBase {
                 return res.send(
                     new JsonResult({
                         success: false,
-                        data: 'Could not send a mail.',
+                        message: 'Could not send a mail.',
                     }),
                 );
             }
@@ -853,9 +860,9 @@ export class AccountController extends ControllerBase {
             });
 
             return res.json(
-                new JsonResult({
+                new JsonResult<any>({
                     success: true,
-                    data: 'Password changed.',
+                    message: 'Password changed.',
                 }),
             );
         } catch (err) {
@@ -958,9 +965,9 @@ export class AccountController extends ControllerBase {
             await me.destroy();
 
             return res.send(
-                new JsonResult({
+                new JsonResult<any>({
                     success: true,
-                    data: 'Thanks for using. See you next time.',
+                    message: 'Thanks for using. See you next time.',
                 }),
             );
         } catch (err) {
@@ -1039,5 +1046,32 @@ export class AccountController extends ControllerBase {
         });
 
         return sent;
+    }
+
+    private generateToken(user: User): string {
+        const signOptions = {
+            expiresIn: '7d',
+            issuer: jwtOptions.issuer,
+            audience: jwtOptions.audience,
+            subject: 'userInfo',
+        };
+
+        const payload = {
+            id: user.id,
+            username: user.username,
+            displayName: user.displayName,
+            email: user.email,
+        };
+        const token = jsonwebtoken.sign(
+            payload,
+            jwtOptions.secret,
+            signOptions,
+        );
+
+        if (!token) {
+            console.warn('[PASSPORT]: JWT fails to generate.');
+        }
+
+        return token;
     }
 }
