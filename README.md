@@ -49,3 +49,39 @@ $ docker build --tag bbonkr/blog-service-backend:1.0.0 .
 -   DB_DATABASE
 -   DB_USERNAME
 -   DB_PASSWORD
+
+docker-compose 를 사용하려면 아래 내용을 참조해서 `docker-compose.yml` 파일을 작성합니다.
+
+```yaml
+version: '3'
+
+services:
+    blog-service-api:
+        container_name: blog-service-api
+        image: bbonkr/blog-service-backend:latest
+        external_links:
+            - db:db
+        environment:
+            - SITE_NAME=nodeblog
+            - COOKIE_SECRET=nodeblog
+            - JWT_SECRET=nodeblog
+            - JWT_ISSUER=localhost
+            - JWT_AUDIENCE="http://localhost:3000"
+            - DB_HOST=db
+            - DB_PORT=3306
+            - DB_DATABASE=nodeblog
+            - DB_USERNAME=nodeblog
+            - DB_PASSWORD=nodeblog
+            - SKIP_PREFLIGHT_CHECK=true
+        ports:
+            - '5000:5000'
+        volumes:
+            - /my-local-dir/uploads:/usr/src/app/uploads
+        network_mode: bridge
+```
+
+작성 후 아래 명령으로 컨테이너를 실행합니다.
+
+```bash
+$ docker-compose up -d
+```

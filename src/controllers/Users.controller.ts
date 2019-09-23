@@ -75,7 +75,7 @@ export class UsersController extends ControllerBase {
 
             const foundUser = await User.findOne({
                 where: { username: username },
-                attributes: ['id', 'username', 'displayName'],
+                attributes: defaultUserAttributes,
             });
 
             if (!foundUser) {
