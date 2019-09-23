@@ -1,10 +1,10 @@
 {
     "name": "blog-node-backend",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "",
     "main": "app.js",
     "keywords": [],
-    "author": "",
+    "author": "Pon Cheol Ku <bbon@bbon.kr>",
     "license": "MIT",
     "scripts": {
         "sequelize": "node_modules/.bin/sequelize",
