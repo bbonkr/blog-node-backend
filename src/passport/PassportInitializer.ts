@@ -9,6 +9,7 @@ import {
     IStrategyOptionsWithRequest,
 } from 'passport-local';
 import bcrypt from 'bcrypt';
+import { HttpStatusError } from '../typings/HttpStatusError';
 
 export class PassportInitializer {
     public init(): void {
@@ -82,7 +83,7 @@ export class PassportInitializer {
                             // req.connection.remoteAddress
                             return done(null, null, {
                                 message:
-                                    'Please check your account information and try again. Not exists email in our system.',
+                                    'Please check your account information and try again.',
                             });
                         }
 
@@ -114,7 +115,9 @@ export class PassportInitializer {
                     } catch (e) {
                         console.error(e);
 
-                        return done(e);
+                        return done(e, null, {
+                            message: e.message,
+                        });
                     }
                 },
             ),
@@ -147,7 +150,13 @@ export class PassportInitializer {
                         where: {
                             username: username,
                         },
-                        attributes: ['id', 'username', 'email', 'displayName'],
+                        attributes: [
+                            'id',
+                            'username',
+                            'email',
+                            'displayName',
+                            'photo',
+                        ],
                     });
 
                     if (!user) {

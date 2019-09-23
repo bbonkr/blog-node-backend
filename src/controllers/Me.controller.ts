@@ -74,7 +74,7 @@ export class MeController extends ControllerBase {
             .post('/category', authWithJwt, this.addCategory.bind(this))
             .patch('/category/:id', authWithJwt, this.updateCategory.bind(this))
             .delete(
-                '/category:/id',
+                '/category/:id',
                 authWithJwt,
                 this.deleteCategory.bind(this),
             );
@@ -695,7 +695,7 @@ export class MeController extends ControllerBase {
                 await Promise.all(
                     adjustOridnal.map((v) => {
                         return v.update({
-                            ordinal: ordinal + 1,
+                            ordinal: v.ordinal + 1,
                         });
                     }),
                 );
@@ -742,6 +742,7 @@ export class MeController extends ControllerBase {
 
             const foundCategory = await Category.findOne({
                 where: { id: id, userId: req.user.id },
+                attributes: ['id', 'name', 'slug', 'userId'],
             });
 
             if (!foundCategory) {
@@ -816,7 +817,7 @@ export class MeController extends ControllerBase {
                 await Promise.all(
                     adjustOridnal.map((v) => {
                         return v.update({
-                            ordinal: ordinal + 1,
+                            ordinal: v.ordinal + 1,
                         });
                     }),
                 );
@@ -853,7 +854,7 @@ export class MeController extends ControllerBase {
     ): Promise<any> {
         try {
             const id = parseInt(req.params.id || '0', 10);
-
+            console.debug('[DEBUG] id:', id);
             const foundCategory = await Category.findOne({
                 where: { id: id, userId: req.user.id },
                 include: [
@@ -862,6 +863,7 @@ export class MeController extends ControllerBase {
                         attributes: ['id'],
                     },
                 ],
+                attributes: ['id', 'name', 'slug', 'userId'],
             });
 
             if (!foundCategory) {

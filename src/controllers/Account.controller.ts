@@ -76,11 +76,24 @@ export class AccountController extends ControllerBase {
         passport.authenticate('local', (err, user, info) => {
             if (err) {
                 console.error(err);
-                next(err);
+                return next(err);
             }
 
             if (info) {
-                return res.status(401).send(info.reason);
+                // return res.status(401).send(info.reason);
+                // return next(
+                //     new HttpStatusError({
+                //         code: 401,
+                //         message: info.message,
+                //     }),
+                // );
+
+                return res.json(
+                    new JsonResult({
+                        success: false,
+                        message: info.message,
+                    }),
+                );
             }
 
             // req.login 실행시 passport.serialize 실행
