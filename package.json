@@ -1,11 +1,15 @@
 {
     "name": "blog-node-backend",
     "version": "1.0.1",
-    "description": "",
+    "description": "blog service backend",
     "main": "app.js",
     "keywords": [],
     "author": "Pon Cheol Ku <bbon@bbon.kr>",
     "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/bbonkr/blog-node-backend.git"
+    },
     "scripts": {
         "sequelize": "node_modules/.bin/sequelize",
         "test": "cross-env NODE_ENV=test JWT_SECRET=TEST JWT_ISSUER=TEST JWT_AUDIENCE=TEST COOKIE_SECRET=TEST jest --detectOpenHandles",

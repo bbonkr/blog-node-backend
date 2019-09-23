@@ -38,7 +38,7 @@ $ docker build --tag bbonkr/blog-service-backend:1.0.0 .
 latest 태그 참조를 변경합니다.
 
 ```
-$ docker tag bbonkr/blog-service-backend:latest bbonkr/blog-service-backend:1.0.0
+$ docker tag bbonkr/blog-service-backend:1.0.0 bbonkr/blog-service-backend:latest
 ```
 
 환경 변수
