@@ -35,6 +35,12 @@ Sequelize 로 ORM을 사용하고, 대상 데이터베이스는 MariaDB를 사�
 $ docker build --tag bbonkr/blog-service-backend:1.0.0 .
 ```
 
+latest 태그 참조를 변경합니다.
+
+```
+$ docker tag bbonkr/blog-service-backend:latest bbonkr/blog-service-backend:1.0.0
+```
+
 환경 변수
 
 > .env.sample 파일 참조
@@ -83,5 +89,5 @@ services:
 작성 후 아래 명령으로 컨테이너를 실행합니다.
 
 ```bash
-$ docker-compose up -d
+$ docker-compose up -d --force-recreate
 ```
