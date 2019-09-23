@@ -56,7 +56,7 @@ export class StatController extends ControllerBase {
             });
 
             let liked = 0;
-            let latest = new Date();
+            let latest: Date = null;
 
             records.forEach((p, index) => {
                 if (index === 0) {
@@ -126,11 +126,11 @@ export class StatController extends ControllerBase {
                 });
 
                 tempDate.setTime(tempDate.getTime() + 1000 * 60 * 60 * 24);
-                console.log(
-                    `tempDate: ${moment(tempDate).format(
-                        'YYYY-MM-DD',
-                    )} | now: ${moment(now).format('YYYY-MM-DD')}`,
-                );
+                // console.log(
+                //     `tempDate: ${moment(tempDate).format(
+                //         'YYYY-MM-DD',
+                //     )} | now: ${moment(now).format('YYYY-MM-DD')}`,
+                // );
             } while (tempDate < now);
 
             rows.forEach((v) => {

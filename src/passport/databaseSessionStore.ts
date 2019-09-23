@@ -37,7 +37,7 @@ export default class DatabaseSessionStore extends expressSession.Store {
                 sid: sid,
             },
         })
-            .then((session) => session.destroy())
+            .then((session) => session && session.destroy())
             .catch((err) => {
                 console.error(err);
                 if (callback) {
