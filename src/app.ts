@@ -108,7 +108,7 @@ export class App {
             // prevent clickjacking
             // this.app.use(helmet.frameguard()); // ==> default
             // HTTP Public Key Pinning
-            this.app.use(helmet.hpkp());
+            // this.app.use(helmet.hpkp());
             // HTTP Strict Transport Security
             // this.app.use(helmet.hsts()); // ==> default
             // remove the X-Powered-By header
