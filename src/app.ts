@@ -4,6 +4,7 @@ import expressSession from 'express-session';
 import morgan from 'morgan';
 import cors from 'cors';
 import path from 'path';
+import helmet from 'helmet';
 import bcrypt from 'bcrypt';
 import { sequelize } from './models';
 import passport = require('passport');
@@ -20,12 +21,16 @@ import { AccountController } from './controllers/Account.controller';
 import { TagsController } from './controllers/Tags.controller';
 import { SampleController } from './controllers/Sample.controller';
 import { StatController } from './controllers/Stat.controller';
+import { JsonResult } from './typings/JsonResult';
 
 export class App {
     public port: number;
-    public readonly cookieName: string = process.env.COOKIE_NAME;
+    // https://expressjs.com/ko/advanced/best-practice-security.html#use-cookies-securely
+    public readonly cookieName: string = 'sessionID';
 
     private readonly isTest: boolean = process.env.NODE_ENV === 'test';
+    private readonly isProd: boolean = process.env.NODE_ENV === 'production';
+
     private app: express.Application;
 
     constructor(port?: number) {
@@ -91,7 +96,31 @@ export class App {
 
         this.app.set('upload-dir', express.static(uploadDir));
 
-        this.app.use(morgan('dev'));
+        if (this.isProd) {
+            // 프로덕션 우수 사례: 보안
+            // https://expressjs.com/ko/advanced/best-practice-security.html
+            // https://helmetjs.github.io/docs/
+            this.app.use(helmet());
+            // setting Content Security Policy
+            this.app.use(helmet.contentSecurityPolicy());
+            // adds some small XSS protections
+            // this.app.use(helmet.xssFilter()); // ==> default
+            // prevent clickjacking
+            // this.app.use(helmet.frameguard()); // ==> default
+            // HTTP Public Key Pinning
+            this.app.use(helmet.hpkp());
+            // HTTP Strict Transport Security
+            // this.app.use(helmet.hsts()); // ==> default
+            // remove the X-Powered-By header
+            this.app.use(helmet.hidePoweredBy());
+            //  disable client-side caching
+            this.app.use(helmet.noCache());
+            // X-Download-Options for IE8+
+            this.app.use(helmet.ieNoOpen());
+            this.app.disable('x-powered-by');
+        }
+
+        this.app.use(morgan(this.isProd ? 'combined' : 'dev'));
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
         this.app.use('/uploads', express.static(uploadDir));
@@ -112,7 +141,7 @@ export class App {
                 secret: process.env.COOKIE_SECRET,
                 cookie: {
                     httpOnly: true,
-                    secure: false, // https 사용시 true
+                    secure: this.isProd, // https 사용시 true
                     domain: appOptions.cookieDomain,
                 },
                 store: dbSessionStore,
@@ -149,7 +178,13 @@ export class App {
                 res: express.Response,
                 next: express.NextFunction,
             ) => {
-                res.status(404).send({ message: `Not fount: ${req.url}` });
+                // res.status(404).send({ message: `Not fount: ${req.url}` });
+                return res.status(404).json(
+                    new JsonResult({
+                        success: false,
+                        message: `Not fount: ${req.url}`,
+                    }),
+                );
             },
         );
 
