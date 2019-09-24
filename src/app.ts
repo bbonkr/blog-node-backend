@@ -102,7 +102,7 @@ export class App {
             // https://helmetjs.github.io/docs/
             this.app.use(helmet());
             // setting Content Security Policy
-            this.app.use(helmet.contentSecurityPolicy());
+            // this.app.use(helmet.contentSecurityPolicy());
             // adds some small XSS protections
             // this.app.use(helmet.xssFilter()); // ==> default
             // prevent clickjacking
