@@ -18,10 +18,11 @@ import { PostAccessLog } from '../models/PostAccessLog.model';
 import { IListResult } from '../typings/IListResult';
 import { uploadToDiskStorage } from '../middleware/uload';
 import { replaceAll, makeSlug } from '../helpers/stringHelper';
-import { markdownConverter } from '../helpers/converter';
+// import { markdownConverter } from '../helpers/converter';
 import { IPostFormData } from '../typings/IPostFormData';
 import { tryParseInt } from '../lib/tryParseInt';
 import { getExcerpt, EXCERPT_LENGTH, stripHtml } from '../lib/post.helper';
+import { markdownConverter } from '../lib/markdownConverter';
 
 export class MeController extends ControllerBase {
     public getPath(): string {
@@ -1074,6 +1075,7 @@ export class MeController extends ControllerBase {
             }
 
             const html = markdownConverter().makeHtml(markdown);
+
             const text = stripHtml(html);
             const slugEdit = !!slug ? slug : makeSlug(title);
 
@@ -1278,6 +1280,7 @@ export class MeController extends ControllerBase {
             }
 
             const html = markdownConverter().makeHtml(markdown);
+
             const text = stripHtml(html);
             const slugEdit = !!slug ? slug : makeSlug(title);
 

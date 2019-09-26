@@ -38,7 +38,12 @@ export const makeSlug = (text: string): string => {
         return null;
     }
 
-    return text.replace(/\s+/g, '-').toLowerCase();
+    const slug: string = text
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+
+    return slug;
 };
 
 /**
