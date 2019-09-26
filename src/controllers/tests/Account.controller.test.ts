@@ -19,7 +19,7 @@ afterAll(() => {
 });
 
 describe('Account', () => {
-    it('Join member', () => {
+    it('Join member', (done) => {
         return supertest(app)
             .post('/api/account/register')
             .send({
@@ -31,10 +31,11 @@ describe('Account', () => {
             })
             .then((response) => {
                 expect(response.status).toBe(200);
+                done();
             });
     });
 
-    it('Join member - should be HTTP400 Make sure username unique', () => {
+    it('Join member - should be HTTP400 Make sure username unique', (done) => {
         return supertest(app)
             .post('/api/account/register')
             .send({
@@ -46,10 +47,11 @@ describe('Account', () => {
             })
             .then((response) => {
                 expect(response.status).toBe(400);
+                done();
             });
     });
 
-    it('Join member - should be HTTP400 Make sure email unique', () => {
+    it('Join member - should be HTTP400 Make sure email unique', (done) => {
         return supertest(app)
             .post('/api/account/register')
             .send({
@@ -61,10 +63,11 @@ describe('Account', () => {
             })
             .then((response) => {
                 expect(response.status).toBe(400);
+                done();
             });
     });
 
-    it('Join member - should be HTTP400 username is required', () => {
+    it('Join member - should be HTTP400 username is required', (done) => {
         return supertest(app)
             .post('/api/account/register')
             .send({
@@ -76,10 +79,11 @@ describe('Account', () => {
             })
             .then((response) => {
                 expect(response.status).toBe(400);
+                done();
             });
     });
 
-    it('Join member - should be HTTP400 displayName is required', () => {
+    it('Join member - should be HTTP400 displayName is required', (done) => {
         return supertest(app)
             .post('/api/account/register')
             .send({
@@ -91,10 +95,11 @@ describe('Account', () => {
             })
             .then((response) => {
                 expect(response.status).toBe(400);
+                done();
             });
     });
 
-    it('Join member - should be HTTP400 email is required', () => {
+    it('Join member - should be HTTP400 email is required', (done) => {
         return supertest(app)
             .post('/api/account/register')
             .send({
@@ -106,10 +111,11 @@ describe('Account', () => {
             })
             .then((response) => {
                 expect(response.status).toBe(400);
+                done();
             });
     });
 
-    it('Join member - should be HTTP400 password is required', () => {
+    it('Join member - should be HTTP400 password is required', (done) => {
         return supertest(app)
             .post('/api/account/register')
             .send({
@@ -121,10 +127,11 @@ describe('Account', () => {
             })
             .then((response) => {
                 expect(response.status).toBe(400);
+                done();
             });
     });
 
-    it('Join member - should be HTTP400 verifyEmailUrl is required', () => {
+    it('Join member - should be HTTP400 verifyEmailUrl is required', (done) => {
         return supertest(app)
             .post('/api/account/register')
             .send({
@@ -136,10 +143,11 @@ describe('Account', () => {
             })
             .then((response) => {
                 expect(response.status).toBe(400);
+                done();
             });
     });
 
-    it('signin - success', () => {
+    it('signin - success', (done) => {
         return supertest(app)
             .post('/api/account/signin')
             .send({
@@ -147,14 +155,17 @@ describe('Account', () => {
                 password: 'test1234',
             })
             .then((response) => {
-                const { success, data } = response.body as IJsonResult<any>;
+                const { success, data, message } = response.body as IJsonResult<
+                    any
+                >;
                 const { user, token } = data;
                 expect(token.length || 0).not.toBe(0);
                 expect(user.username).toBe('test');
+                done();
             });
     });
 
-    it('signin - failure', () => {
+    it('signin - failure', (done) => {
         return supertest(app)
             .post('/api/account/signin')
             .send({
@@ -162,11 +173,18 @@ describe('Account', () => {
                 password: 'test',
             })
             .then((response) => {
-                expect(response.status).toBe(401);
+                const { success, data, message } = response.body as IJsonResult<
+                    any
+                >;
+                expect(response.status).toBe(200);
+                expect(success).toBe(false);
+                expect(message).not.toBeNull();
+
+                done();
             });
     });
 
-    it('signin - failure username required', () => {
+    it('signin - failure username required', (done) => {
         return supertest(app)
             .post('/api/account/signin')
             .send({
@@ -174,11 +192,18 @@ describe('Account', () => {
                 password: 'test',
             })
             .then((response) => {
-                expect(response.status).toBe(401);
+                const { success, data, message } = response.body as IJsonResult<
+                    any
+                >;
+                expect(response.status).toBe(200);
+                expect(success).toBe(false);
+                expect(message).not.toBeNull();
+
+                done();
             });
     });
 
-    it('signin - failure  password required', () => {
+    it('signin - failure  password required', (done) => {
         return supertest(app)
             .post('/api/account/signin')
             .send({
@@ -186,7 +211,14 @@ describe('Account', () => {
                 password: '',
             })
             .then((response) => {
-                expect(response.status).toBe(401);
+                const { success, data, message } = response.body as IJsonResult<
+                    any
+                >;
+                expect(response.status).toBe(200);
+                expect(success).toBe(false);
+                expect(message).not.toBeNull();
+
+                done();
             });
     });
 });
