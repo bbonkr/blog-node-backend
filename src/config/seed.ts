@@ -2,9 +2,9 @@ import { User } from '../models/User.model';
 import bcrypt from 'bcrypt';
 import { Category } from '../models/Category.model';
 import { Tag } from '../models/Tag.model';
-import { markdownConverter } from '../helpers/converter';
 import { stripHtml, getExcerpt, EXCERPT_LENGTH } from '../lib/post.helper';
 import { Post } from '../models/Post.model';
+import { markdownConverter } from '../lib/markdownConverter';
 
 export const seed = async () => {
     console.log('start to insert seed data.');
