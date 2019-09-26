@@ -1,9 +1,9 @@
-declare module 'showdown-xss-filter' {
+declare module 'showdown-highlight' {
     import Showdown from 'showdown';
 
-    function showdownHighlight(
+    function xssFilter(
         converter?: Showdown.Converter,
     ): Showdown.ShowdownExtension[];
 
-    export default showdownHighlight;
+    export default xssFilter;
 }
