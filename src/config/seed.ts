@@ -4,11 +4,12 @@ import { Category } from '../models/Category.model';
 import { Tag } from '../models/Tag.model';
 import { stripHtml, getExcerpt, EXCERPT_LENGTH } from '../lib/post.helper';
 import { Post } from '../models/Post.model';
-import { markdownConverter } from '../lib/markdownConverter';
+// import { markdownConverter } from '../lib/markdownConverter';
+import { getMarked } from '../lib/getMarked';
 
 export const seed = async () => {
     console.log('start to insert seed data.');
-
+    const marked = getMarked();
     const hasUser = await User.findAll({
         attributes: ['id'],
     });
@@ -76,7 +77,8 @@ Nam risus est, volutpat sit amet mauris et, imperdiet dapibus nisl. In elementum
 
 Nunc rutrum sapien at eleifend interdum. Duis tortor sapien, imperdiet imperdiet varius a, placerat vel metus. Fusce ac dui diam. Donec vulputate volutpat neque vel mollis. Vivamus pretium mi risus, in mollis tortor semper eu. Vestibulum eget venenatis tellus, quis porta neque. Ut laoreet orci ut dolor ultricies pretium. Morbi efficitur tellus vitae justo porta sollicitudin. Fusce ultrices eros nec convallis faucibus. Vivamus posuere velit non aliquet mollis.
 `;
-            const html = markdownConverter().makeHtml(markdown);
+            // const html = markdownConverter().makeHtml(markdown);
+            const html = marked(markdown);
             const text = stripHtml(html);
             const excerpt = getExcerpt(text, EXCERPT_LENGTH);
 
