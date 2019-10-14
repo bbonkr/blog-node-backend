@@ -22,7 +22,8 @@ import { replaceAll, makeSlug } from '../helpers/stringHelper';
 import { IPostFormData } from '../typings/IPostFormData';
 import { tryParseInt } from '../lib/tryParseInt';
 import { getExcerpt, EXCERPT_LENGTH, stripHtml } from '../lib/post.helper';
-import { markdownConverter } from '../lib/markdownConverter';
+// import { markdownConverter } from '../lib/markdownConverter';
+import { getMarked } from '../lib/getMarked';
 
 export class MeController extends ControllerBase {
     public getPath(): string {
@@ -1073,8 +1074,9 @@ export class MeController extends ControllerBase {
                     message: 'Please make sure title does have empty value.',
                 });
             }
-
-            const html = markdownConverter().makeHtml(markdown);
+            const marked = getMarked();
+            // const html = markdownConverter().makeHtml(markdown);
+            const html = marked(markdown);
 
             const text = stripHtml(html);
             const slugEdit = !!slug ? slug : makeSlug(title);
@@ -1278,8 +1280,9 @@ export class MeController extends ControllerBase {
                     message: 'Please make sure title does have empty value.',
                 });
             }
-
-            const html = markdownConverter().makeHtml(markdown);
+            const marked = getMarked();
+            // const html = markdownConverter().makeHtml(markdown);
+            const html = marked(markdown);
 
             const text = stripHtml(html);
             const slugEdit = !!slug ? slug : makeSlug(title);
