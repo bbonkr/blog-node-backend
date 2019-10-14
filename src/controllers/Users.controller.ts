@@ -398,7 +398,7 @@ export class UsersController extends ControllerBase {
                 ],
             });
 
-            const posts = await Post.findAll({
+            const postsFiltered = await Post.findAll({
                 where: where,
                 include: [
                     {
@@ -430,6 +430,40 @@ export class UsersController extends ControllerBase {
                 order: [['createdAt', 'DESC']],
                 limit: limit,
                 offset: this.getOffset(count, page, limit),
+                attributes: ['id', 'createdAt'],
+            });
+
+            const posts = await Post.findAll({
+                where: {
+                    id: {
+                        [Sequelize.Op.in]: postsFiltered.map((p) => p.id),
+                    },
+                },
+                include: [
+                    {
+                        model: User,
+                        as: 'user',
+                        attributes: defaultUserAttributes,
+                    },
+                    {
+                        model: Tag,
+                        attributes: ['id', 'slug', 'name'],
+                    },
+                    {
+                        model: Category,
+                        attributes: ['id', 'slug', 'name'],
+                    },
+                    {
+                        model: PostAccessLog,
+                        attributes: ['id'],
+                    },
+                    {
+                        model: User,
+                        as: 'likers',
+                        attributes: ['id'],
+                    },
+                ],
+                order: [['createdAt', 'DESC']],
                 attributes: [
                     'id',
                     'title',
