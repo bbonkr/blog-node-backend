@@ -40,7 +40,8 @@ export const makeSlug = (text: string): string => {
 
     const slug: string = text
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
+        // .replace(/[^a-z0-9]+/g, '-')
+        .replace(/[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣]+/g, '-')
         .replace(/(^-|-$)+/g, '');
 
     return slug;

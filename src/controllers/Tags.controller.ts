@@ -165,7 +165,7 @@ export class TagsController extends ControllerBase {
                 attributes: ['id'],
             });
 
-            const posts = await Post.findAll({
+            const postsFiltered = await Post.findAll({
                 where: where,
                 include: [
                     {
@@ -198,6 +198,40 @@ export class TagsController extends ControllerBase {
                 order: [['createdAt', 'DESC']],
                 limit: limit,
                 offset: this.getOffset(count, page, limit),
+                attributes: ['id', 'createdAt'],
+            });
+
+            const posts = await Post.findAll({
+                where: {
+                    id: {
+                        [Op.in]: postsFiltered.map((p) => p.id),
+                    },
+                },
+                include: [
+                    {
+                        model: User,
+                        as: 'user',
+                        attributes: defaultUserAttributes,
+                    },
+                    {
+                        model: Tag,
+                        attributes: ['id', 'name', 'slug'],
+                    },
+                    {
+                        model: Category,
+                        attributes: ['id', 'name', 'slug'],
+                    },
+                    {
+                        model: PostAccessLog,
+                        attributes: ['id'],
+                    },
+                    {
+                        model: User,
+                        as: 'likers',
+                        attributes: ['id'],
+                    },
+                ],
+                order: [['createdAt', 'DESC']],
                 attributes: [
                     'id',
                     'title',
