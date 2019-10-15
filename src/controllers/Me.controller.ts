@@ -1506,7 +1506,12 @@ export class MeController extends ControllerBase {
             if (post.accessLogs && post.accessLogs.length > 0) {
                 await Promise.all(
                     post.accessLogs.map((x) => {
-                        return post.$remove('accessLogs', x);
+                        // return post.$remove('accessLogs', x);
+                        return PostAccessLog.destroy({
+                            where: {
+                                id: x.id,
+                            },
+                        });
                     }),
                 );
             }
@@ -1520,7 +1525,12 @@ export class MeController extends ControllerBase {
             if (post.comments && post.comments.length > 0) {
                 await Promise.all(
                     post.comments.map((x) => {
-                        return post.$remove('comments', x);
+                        // return post.$remove('comments', x);
+                        return Comment.destroy({
+                            where: {
+                                id: x.id,
+                            },
+                        });
                     }),
                 );
             }
