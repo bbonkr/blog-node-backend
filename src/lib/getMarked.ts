@@ -5,7 +5,7 @@ export const getMarked = () => {
         // langPrefix: 'language-',
         gfm: true,
         headerIds: true,
-        tables: true,
+        // tables: true,
         breaks: true,
         smartLists: true,
     });
