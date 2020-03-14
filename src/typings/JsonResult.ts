@@ -1,7 +1,12 @@
-import { IJsonResult } from './IJsonResult';
 import { HttpStatusError } from './HttpStatusError';
 
-export class JsonResult<T> implements IJsonResult<T> {
+interface JsonResultModel<T> {
+    success: boolean;
+    data?: T | T[] | null;
+    message?: string;
+}
+
+export class JsonResult<T> implements JsonResultModel<T> {
     public static Empty: JsonResult<object> = JsonResult.getEmptyResult();
 
     public static getEmptyResult(): JsonResult<object> {
@@ -14,9 +19,7 @@ export class JsonResult<T> implements IJsonResult<T> {
         return result;
     }
 
-    public static getErrorResult(
-        err: HttpStatusError,
-    ): JsonResult<HttpStatusError> {
+    public static getErrorResult(err: HttpStatusError): JsonResult<HttpStatusError> {
         return new JsonResult({
             success: false,
             data: err,
@@ -28,7 +31,7 @@ export class JsonResult<T> implements IJsonResult<T> {
     public data?: T | T[] | null;
     public message?: string;
 
-    constructor(value?: IJsonResult<T>) {
+    constructor(value?: JsonResultModel<T>) {
         if (value) {
             this.success = value.success;
             this.data = value.data;

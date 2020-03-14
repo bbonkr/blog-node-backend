@@ -1,4 +1,4 @@
-export interface ISignUpFormValue {
+export interface SignUpFormOptions {
     email?: string;
     password?: string;
     passwordConfirm?: string;

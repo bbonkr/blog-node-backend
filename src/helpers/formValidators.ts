@@ -1,9 +1,8 @@
 import { Validator } from './validator';
 import { IValidationResult } from '../typings/IValidationResult';
 import { ValidationResult } from '../typings/ValidationResult';
-import { IFormValidationResult } from '../typings/IFormValidationResult';
 import { FormValidationResult } from '../typings/FormValidationResult';
-import { ISignUpFormValue } from '../typings/ISignUpFormValue';
+import { SignUpFormOptions } from '../typings/SignUpFormOptions';
 
 export const USERNAME_MIN_LENGTH = 3;
 export const DISPLAYNAME_MIN_LENGTH = 3;
@@ -36,7 +35,7 @@ export class SignUpFormValidator {
      * 전자우편주소 유효성 검사
      * @param formValues
      */
-    public checkEmail(formValues: ISignUpFormValue): IValidationResult {
+    public checkEmail(formValues: SignUpFormOptions): IValidationResult {
         const { email } = formValues;
         if (!email || email.trim().length === 0) {
             return new ValidationResult({
@@ -59,7 +58,7 @@ export class SignUpFormValidator {
      * 비밀번호 유효성 검사
      * @param formValues
      */
-    public checkPassword(formValues: ISignUpFormValue): IValidationResult {
+    public checkPassword(formValues: SignUpFormOptions): IValidationResult {
         const { password } = formValues;
 
         return this.validatePassword(password.trim());
@@ -69,9 +68,7 @@ export class SignUpFormValidator {
      * 비밀번호 확인 유효성 검사
      * @param formValues
      */
-    public checkPasswordConfirm(
-        formValues: ISignUpFormValue,
-    ): IValidationResult {
+    public checkPasswordConfirm(formValues: SignUpFormOptions): IValidationResult {
         const { password, passwordConfirm } = formValues;
 
         const result = this.validatePassword(passwordConfirm.trim());
@@ -94,7 +91,7 @@ export class SignUpFormValidator {
      * 계정이름 유효성 검사
      * @param formValues
      */
-    public checkUsername(formValues: ISignUpFormValue): IValidationResult {
+    public checkUsername(formValues: SignUpFormOptions): IValidationResult {
         const { username } = formValues;
         if (!username || username.trim().length === 0) {
             return new ValidationResult({
@@ -125,7 +122,7 @@ export class SignUpFormValidator {
      * 출력 이름 유효성 검사
      * @param formValues
      */
-    public checkDisplayName(formValues: ISignUpFormValue): IValidationResult {
+    public checkDisplayName(formValues: SignUpFormOptions): IValidationResult {
         const { displayName } = formValues;
 
         if (!displayName || displayName.trim().length === 0) {
@@ -149,7 +146,7 @@ export class SignUpFormValidator {
      * 폼 입력값의 유효성 검사를 실행합니다.
      * @param formValues
      */
-    public validate(formValues: ISignUpFormValue): IFormValidationResult {
+    public validate(formValues: SignUpFormOptions): FormValidationResult {
         const results: IValidationResult[] = [];
 
         results.push(this.checkEmail(formValues));

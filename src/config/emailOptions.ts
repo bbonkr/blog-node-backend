@@ -1,6 +1,6 @@
-import { IEmailOptions } from '../typings/IEmailOptions';
+import { EmailOptions } from '../typings/EmailOptions';
 
-export const emailOptions: IEmailOptions = {
+export const emailOptions: EmailOptions = {
     sender: {
         email: 'app@bbon.kr',
         name: 'Blog Service',

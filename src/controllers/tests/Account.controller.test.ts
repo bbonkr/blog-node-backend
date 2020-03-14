@@ -1,7 +1,7 @@
 import express from 'express';
 import supertest from 'supertest';
-import { IJsonResult } from '../../typings/IJsonResult';
 import { getExpressApp } from './app';
+import { JsonResult } from '../../typings/JsonResult';
 
 let app: express.Application;
 
@@ -11,7 +11,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
     // avoid jest open handle error
-    await new Promise((resolve) => setTimeout(() => resolve(), 500));
+    await new Promise(resolve => setTimeout(() => resolve(), 500));
 });
 
 describe('Account', () => {
@@ -135,7 +135,7 @@ describe('Account', () => {
                 password: 'test1234',
             });
 
-        const { success, data, message } = response.body as IJsonResult<any>;
+        const { success, data, message } = response.body as JsonResult<any>;
         const { user, token } = data;
         expect(token.length || 0).not.toBe(0);
         expect(user.username).toBe('test');
@@ -149,7 +149,7 @@ describe('Account', () => {
                 password: 'test',
             });
 
-        const { success, data, message } = response.body as IJsonResult<any>;
+        const { success, data, message } = response.body as JsonResult<any>;
         expect(response.status).toBe(200);
         expect(success).toBe(false);
         expect(message).not.toBeNull();
@@ -163,7 +163,7 @@ describe('Account', () => {
                 password: 'test',
             });
 
-        const { success, data, message } = response.body as IJsonResult<any>;
+        const { success, data, message } = response.body as JsonResult<any>;
         expect(response.status).toBe(200);
         expect(success).toBe(false);
         expect(message).not.toBeNull();
@@ -177,7 +177,7 @@ describe('Account', () => {
                 password: '',
             });
 
-        const { success, data, message } = response.body as IJsonResult<any>;
+        const { success, data, message } = response.body as JsonResult<any>;
         expect(response.status).toBe(200);
         expect(success).toBe(false);
         expect(message).not.toBeNull();
