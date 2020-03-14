@@ -1,4 +1,4 @@
-export interface IDatabaseSessionStoreOptions {
+export interface DatabaseSessionStoreOptions {
     expiration?: number;
     clearInterval?: number;
 }

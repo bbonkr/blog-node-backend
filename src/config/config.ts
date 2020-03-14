@@ -1,9 +1,9 @@
 import dotenv from 'dotenv';
-import { IDatabaseConfig } from '../typings/IDatabaseConfig';
+import { DatabaseConfig } from '../typings/DatabaseConfig';
 
 dotenv.config();
 
-export const sequelizeConfig: IDatabaseConfig = {
+export const sequelizeConfig: DatabaseConfig = {
     development: {
         username: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,

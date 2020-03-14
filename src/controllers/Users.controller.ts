@@ -10,10 +10,7 @@ import { Tag } from '../models/Tag.model';
 import { Category } from '../models/Category.model';
 import { PostAccessLog } from '../models/PostAccessLog.model';
 import { JsonResult } from '../typings/JsonResult';
-import {
-    IListResult,
-    IListResultWithInformation,
-} from '../typings/IListResult';
+import { ListResult, ListResultWithInformation } from '../typings/ListResult';
 import { normalizeUsername } from '../helpers/stringHelper';
 import { authWithJwt } from '../middleware/authWithJwt';
 
@@ -26,20 +23,9 @@ export class UsersController extends ControllerBase {
         this.router.get('/:user/posts', this.getUserPosts.bind(this));
         this.router.get('/:user/posts/:post', this.getUserPost.bind(this));
         this.router.get('/:user/categories', this.getUserCategories.bind(this));
-        this.router.get(
-            '/:user/categories/:category/posts',
-            this.getUserCategoryPosts.bind(this),
-        );
-        this.router.post(
-            '/:user/posts/:post/like',
-            authWithJwt,
-            this.likePost.bind(this),
-        );
-        this.router.delete(
-            '/:user/posts/:post/like',
-            authWithJwt,
-            this.unlikePost.bind(this),
-        );
+        this.router.get('/:user/categories/:category/posts', this.getUserCategoryPosts.bind(this));
+        this.router.post('/:user/posts/:post/like', authWithJwt, this.likePost.bind(this));
+        this.router.delete('/:user/posts/:post/like', authWithJwt, this.unlikePost.bind(this));
     }
 
     /**
@@ -58,17 +44,12 @@ export class UsersController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async getUserPosts(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async getUserPosts(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
             /** 사용자 username :==> @userName */
             const user: string = decodeURIComponent(req.params.user);
             const limit: number = parseInt(req.query.limit || '10', 10);
-            const keyword: string =
-                req.query.keyword && decodeURIComponent(req.query.keyword);
+            const keyword: string = req.query.keyword && decodeURIComponent(req.query.keyword);
             const page: number = parseInt(req.query.page || '1', 10);
 
             const username = normalizeUsername(user);
@@ -135,19 +116,11 @@ export class UsersController extends ControllerBase {
                 order: [['createdAt', 'DESC']],
                 limit: limit,
                 offset: this.getOffset(count, page, limit),
-                attributes: [
-                    'id',
-                    'title',
-                    'slug',
-                    'excerpt',
-                    'coverImage',
-                    'createdAt',
-                    'updatedAt',
-                ],
+                attributes: ['id', 'title', 'slug', 'excerpt', 'coverImage', 'createdAt', 'updatedAt'],
             });
 
             return res.json(
-                new JsonResult<IListResultWithInformation<Post>>({
+                new JsonResult<ListResultWithInformation<Post>>({
                     success: true,
                     data: {
                         records: posts,
@@ -168,11 +141,7 @@ export class UsersController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async getUserPost(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async getUserPost(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
             /** 사용자 username :==> @userName */
             const user: string = decodeURIComponent(req.params.user);
@@ -238,16 +207,7 @@ export class UsersController extends ControllerBase {
                     },
                 ],
                 order: [['createdAt', 'DESC']],
-                attributes: [
-                    'id',
-                    'title',
-                    'slug',
-                    'html',
-                    'excerpt',
-                    'coverImage',
-                    'createdAt',
-                    'updatedAt',
-                ],
+                attributes: ['id', 'title', 'slug', 'html', 'excerpt', 'coverImage', 'createdAt', 'updatedAt'],
             });
 
             if (!post) {
@@ -338,8 +298,7 @@ export class UsersController extends ControllerBase {
             const user: string = decodeURIComponent(req.params.user);
             const category: string = decodeURIComponent(req.params.category);
             const limit: number = parseInt(req.query.limit || '10', 10);
-            const keyword: string =
-                req.query.keyword && decodeURIComponent(req.query.keyword);
+            const keyword: string = req.query.keyword && decodeURIComponent(req.query.keyword);
             const page = parseInt(req.query.page || '1', 10);
 
             const username = normalizeUsername(user);
@@ -436,7 +395,7 @@ export class UsersController extends ControllerBase {
             const posts = await Post.findAll({
                 where: {
                     id: {
-                        [Sequelize.Op.in]: postsFiltered.map((p) => p.id),
+                        [Sequelize.Op.in]: postsFiltered.map(p => p.id),
                     },
                 },
                 include: [
@@ -464,19 +423,11 @@ export class UsersController extends ControllerBase {
                     },
                 ],
                 order: [['createdAt', 'DESC']],
-                attributes: [
-                    'id',
-                    'title',
-                    'slug',
-                    'excerpt',
-                    'coverImage',
-                    'createdAt',
-                    'updatedAt',
-                ],
+                attributes: ['id', 'title', 'slug', 'excerpt', 'coverImage', 'createdAt', 'updatedAt'],
             });
 
             return res.json(
-                new JsonResult<IListResultWithInformation<Post>>({
+                new JsonResult<ListResultWithInformation<Post>>({
                     success: true,
                     data: {
                         records: posts,
@@ -500,11 +451,7 @@ export class UsersController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async likePost(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async likePost(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
             /** 사용자 username :==> @userName */
             const user: string = decodeURIComponent(req.params.user);
@@ -554,9 +501,7 @@ export class UsersController extends ControllerBase {
                 return res.status(404).send(`Could not find a post. [${slug}]`);
             }
 
-            const likerIndex = post.likers.findIndex(
-                (x) => x.id === req.user.id,
-            );
+            const likerIndex = post.likers.findIndex(x => x.id === req.user.id);
 
             if (likerIndex >= 0) {
                 throw new HttpStatusError({
@@ -601,11 +546,7 @@ export class UsersController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async unlikePost(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async unlikePost(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
             /** 사용자 username :==> @userName */
             const user: string = decodeURIComponent(req.params.user);
@@ -656,9 +597,7 @@ export class UsersController extends ControllerBase {
                 return res.status(404).send(`Could not find a post. [${slug}]`);
             }
 
-            const likerIndex = post.likers.findIndex(
-                (x) => x.id === req.user.id,
-            );
+            const likerIndex = post.likers.findIndex(x => x.id === req.user.id);
             if (likerIndex < 0) {
                 throw new HttpStatusError({
                     code: 400,

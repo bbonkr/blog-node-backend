@@ -6,7 +6,7 @@ import { Post } from '../models/Post.model';
 import { PostAccessLog } from '../models/PostAccessLog.model';
 import { User } from '../models/User.model';
 import { JsonResult } from '../typings/JsonResult';
-import { IDictionary } from '../typings/IDictionary';
+import { Dictionary } from '../typings/Dictionary';
 import { authWithJwt } from '../middleware/authWithJwt';
 import moment from 'moment';
 
@@ -15,11 +15,7 @@ export class StatController extends ControllerBase {
         return '/api/me/stat';
     }
     protected initializeRoutes(): void {
-        this.router.get(
-            '/general',
-            authWithJwt,
-            this.getGeneralStat.bind(this),
-        );
+        this.router.get('/general', authWithJwt, this.getGeneralStat.bind(this));
         this.router.get('/postread', authWithJwt, this.getPostRead.bind(this));
     }
 
@@ -66,7 +62,7 @@ export class StatController extends ControllerBase {
             });
 
             return res.json(
-                new JsonResult<IDictionary<any>>({
+                new JsonResult<Dictionary<any>>({
                     success: true,
                     data: {
                         posts: records.length,
@@ -80,11 +76,7 @@ export class StatController extends ControllerBase {
         }
     }
 
-    private async getPostRead(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async getPostRead(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
             const now = new Date();
             const before = new Date();
@@ -133,11 +125,9 @@ export class StatController extends ControllerBase {
                 // );
             } while (tempDate < now);
 
-            rows.forEach((v) => {
+            rows.forEach(v => {
                 const createdAt = new Date(v.createdAt);
-                const found = stat.find(
-                    (x) => x.xAxis === moment(createdAt).format('YYYY-MM-DD'),
-                );
+                const found = stat.find(x => x.xAxis === moment(createdAt).format('YYYY-MM-DD'));
                 if (found) {
                     found.read++;
                 } else {

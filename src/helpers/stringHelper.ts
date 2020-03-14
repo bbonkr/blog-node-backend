@@ -1,4 +1,4 @@
-import { IDictionary } from '../typings/IDictionary';
+import { Dictionary } from '../typings/Dictionary';
 
 /**
  * URL과 쿼리 정보를 사용해서 URL을 작성합니다.
@@ -7,10 +7,7 @@ import { IDictionary } from '../typings/IDictionary';
  *
  * @returns {string} 완성된 URL
  */
-export const normalizeReturnUrl = (
-    pathname: string = '',
-    query: IDictionary<string>,
-): string => {
+export const normalizeReturnUrl = (pathname: string = '', query: Dictionary<string>): string => {
     let url: string = pathname;
     if (!!query) {
         url = `${url}?`;
@@ -61,9 +58,7 @@ export const formatNumber = (num: number): string => {
     } else if (typeof num === 'number') {
         tempNum = num;
     } else {
-        throw new Error(
-            'Reqiure number or string value. such as 1, 2, 3 or "1", "2", "3"',
-        );
+        throw new Error('Reqiure number or string value. such as 1, 2, 3 or "1", "2", "3"');
     }
 
     if (tempNum === 0) {
@@ -86,11 +81,7 @@ export const formatNumber = (num: number): string => {
  * @param toFind
  * @param thenReplace
  */
-export const replaceAll = (
-    fromText: string,
-    toFind: string,
-    thenReplace: string,
-): string => {
+export const replaceAll = (fromText: string, toFind: string, thenReplace: string): string => {
     if (typeof fromText !== 'string') {
         throw new Error('First argument should be a string type.');
     }
@@ -118,8 +109,7 @@ export const normalizeUsername = (username: string = ''): string => {
  */
 export const randomString = (len: number = 13): string => {
     const buf: string[] = [];
-    const chars: string =
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const chars: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const charlen: number = chars.length;
 
     for (let i: number = 0; i < len; ++i) {

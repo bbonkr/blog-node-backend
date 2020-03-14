@@ -1,8 +1,12 @@
-import express = require('express');
-import { IControllerBase } from './IControllerBase';
+import express from 'express';
 import { HttpStatusError } from './HttpStatusError';
 
-export abstract class ControllerBase implements IControllerBase {
+interface Controller {
+    getPath(): string;
+    getRouter(): express.Router;
+}
+
+export abstract class ControllerBase implements Controller {
     protected readonly router: express.Router = express.Router();
 
     constructor() {
@@ -15,11 +19,7 @@ export abstract class ControllerBase implements IControllerBase {
         return this.router;
     }
 
-    protected getOffset(
-        total: number,
-        page: number = 1,
-        limit: number = 10,
-    ): number {
+    protected getOffset(total: number, page: number = 1, limit: number = 10): number {
         return (page - 1) * limit;
     }
 

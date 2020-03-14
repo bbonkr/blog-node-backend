@@ -1,7 +1,7 @@
 import expressSession from 'express-session';
 import Sequelize from 'sequelize';
 import { Session } from './Session.model';
-import { IDatabaseSessionStoreOptions } from '../typings/IDatabaseSessionStoreOptions';
+import { DatabaseSessionStoreOptions } from '../typings/DatabaseSessionStoreOptions';
 
 const Op = Sequelize.Op;
 
@@ -14,17 +14,15 @@ const Op = Sequelize.Op;
  * ```
  */
 export default class DatabaseSessionStore extends expressSession.Store {
-    private options: IDatabaseSessionStoreOptions;
+    private options: DatabaseSessionStoreOptions;
     private clearExpiredSessionsInterval: NodeJS.Timeout;
 
-    constructor(config: IDatabaseSessionStoreOptions) {
+    constructor(config: DatabaseSessionStoreOptions) {
         super(config);
 
         const options = {
-            expiration:
-                config.expiration || 1000 * 60 * 60 * 24 * 120 /** 120 days */,
-            clearInterval:
-                config.clearInterval || 1000 * 60 * 30 /** 30 minutes */,
+            expiration: config.expiration || 1000 * 60 * 60 * 24 * 120 /** 120 days */,
+            clearInterval: config.clearInterval || 1000 * 60 * 30 /** 30 minutes */,
         };
 
         this.options = options;
@@ -37,8 +35,8 @@ export default class DatabaseSessionStore extends expressSession.Store {
                 sid: sid,
             },
         })
-            .then((session) => session && session.destroy())
-            .catch((err) => {
+            .then(session => session && session.destroy())
+            .catch(err => {
                 console.error(err);
                 if (callback) {
                     callback(err);
@@ -46,17 +44,12 @@ export default class DatabaseSessionStore extends expressSession.Store {
             });
     };
 
-    public get = (
-        sid: string,
-        callback: (err: any, session?: Express.SessionData | null) => void,
-    ): void => {
+    public get = (sid: string, callback: (err: any, session?: Express.SessionData | null) => void): void => {
         Session.findOne({ where: { sid: sid } })
-            .then((session) => {
+            .then(session => {
                 const now = new Date();
                 const expired = session.expire > now;
-                const err: Error | null = expired
-                    ? new Error('Session was expired.')
-                    : null;
+                const err: Error | null = expired ? new Error('Session was expired.') : null;
                 const sessionData: Express.SessionData | null = expired
                     ? null
                     : (JSON.parse(session.sess) as Express.SessionData);
@@ -67,7 +60,7 @@ export default class DatabaseSessionStore extends expressSession.Store {
                     callback(err, sessionData);
                 }
             })
-            .catch((err) => {
+            .catch(err => {
                 console.error(err);
 
                 if (callback) {
@@ -76,15 +69,9 @@ export default class DatabaseSessionStore extends expressSession.Store {
             });
     };
 
-    public set = (
-        sid: string,
-        session: Express.SessionData,
-        callback?: (err?: any) => void,
-    ): void => {
+    public set = (sid: string, session: Express.SessionData, callback?: (err?: any) => void): void => {
         const now = new Date();
-        const expireMiliseconds = now.setMilliseconds(
-            now.getMilliseconds() + this.options.expiration,
-        );
+        const expireMiliseconds = now.setMilliseconds(now.getMilliseconds() + this.options.expiration);
         const expire = new Date(expireMiliseconds);
 
         const newSession = new Session({
@@ -95,13 +82,13 @@ export default class DatabaseSessionStore extends expressSession.Store {
 
         newSession
             .save()
-            .then((_) => {
+            .then(_ => {
                 console.debug('session created.');
                 if (callback) {
                     callback(null);
                 }
             })
-            .catch((err) => {
+            .catch(err => {
                 console.error(err);
                 if (callback) {
                     callback(err);
@@ -117,10 +104,10 @@ export default class DatabaseSessionStore extends expressSession.Store {
                 },
             },
         })
-            .then((affected) => {
+            .then(affected => {
                 console.debug(`${affected} expired session deleted.`);
             })
-            .catch((err) => {
+            .catch(err => {
                 console.error(err);
             });
     }

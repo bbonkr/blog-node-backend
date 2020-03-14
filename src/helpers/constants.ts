@@ -1,4 +1,4 @@
-import { IDictionary } from '../typings/IDictionary';
+import { Dictionary } from '../typings/Dictionary';
 
 export enum HttpStateCodeCategory {
     CATEGORY_INFORMATION = 'Information',
@@ -15,7 +15,7 @@ export interface HttpStatus {
 /**
  * http status code 상태 코드
  */
-export const httpStatus: IDictionary<HttpStatus> = {
+export const httpStatus: Dictionary<HttpStatus> = {
     http100: {
         code: 100,
         status: 'Continue',

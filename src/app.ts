@@ -10,7 +10,6 @@ import { sequelize } from './models';
 import passport = require('passport');
 import { User } from './models/User.model';
 import DatabaseSessionStore from './passport/databaseSessionStore';
-import { IControllerBase } from './typings/IControllerBase';
 import { errorLogger, errorJsonResult } from './middleware/errorProcess';
 import { PassportInitializer } from './passport/PassportInitializer';
 import { appOptions } from './config/appOptions';
@@ -22,6 +21,7 @@ import { TagsController } from './controllers/Tags.controller';
 import { SampleController } from './controllers/Sample.controller';
 import { StatController } from './controllers/Stat.controller';
 import { JsonResult } from './typings/JsonResult';
+import { ControllerBase } from './typings/ControllerBase';
 
 export class App {
     public port: number;
@@ -155,7 +155,7 @@ export class App {
     }
 
     private initializeControllers() {
-        const controllers: IControllerBase[] = [
+        const controllers: ControllerBase[] = [
             /* 컨트롤러 */
             new AccountController(),
             new MeController(),
@@ -171,22 +171,15 @@ export class App {
         });
 
         // 404
-        this.app.get(
-            '*',
-            (
-                req: express.Request,
-                res: express.Response,
-                next: express.NextFunction,
-            ) => {
-                // res.status(404).send({ message: `Not fount: ${req.url}` });
-                return res.status(404).json(
-                    new JsonResult({
-                        success: false,
-                        message: `Not fount: ${req.url}`,
-                    }),
-                );
-            },
-        );
+        this.app.get('*', (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            // res.status(404).send({ message: `Not fount: ${req.url}` });
+            return res.status(404).json(
+                new JsonResult({
+                    success: false,
+                    message: `Not fount: ${req.url}`,
+                }),
+            );
+        });
 
         if (!this.isTest) {
             this.app.use(errorLogger);
@@ -194,6 +187,6 @@ export class App {
 
         this.app.use(errorJsonResult);
 
-        console.log('[APP] Router ready!');
+        console.info('[APP] Router ready!');
     }
 }

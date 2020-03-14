@@ -15,11 +15,11 @@ import { Category } from '../models/Category.model';
 import { Image } from '../models/Image.model';
 import { Tag } from '../models/Tag.model';
 import { PostAccessLog } from '../models/PostAccessLog.model';
-import { IListResult } from '../typings/IListResult';
+import { ListResult } from '../typings/ListResult';
 import { uploadToDiskStorage } from '../middleware/uload';
 import { replaceAll, makeSlug } from '../helpers/stringHelper';
 // import { markdownConverter } from '../helpers/converter';
-import { IPostFormData } from '../typings/IPostFormData';
+import { IPostFormData } from '../typings/PostFormData';
 import { tryParseInt } from '../lib/tryParseInt';
 import { getExcerpt, EXCERPT_LENGTH, stripHtml } from '../lib/post.helper';
 // import { markdownConverter } from '../lib/markdownConverter';
@@ -36,50 +36,24 @@ export class MeController extends ControllerBase {
         this.router.get('/post/:id', authWithJwt, this.getPost.bind(this));
         this.router.post('/post', authWithJwt, this.addPost.bind(this));
         this.router.patch('/post/:id', authWithJwt, this.updatePost.bind(this));
-        this.router.delete(
-            '/post/:id',
-            authWithJwt,
-            this.deletePost.bind(this),
-        );
+        this.router.delete('/post/:id', authWithJwt, this.deletePost.bind(this));
 
         this.router.get('/media', authWithJwt, this.getFiles.bind(this));
         this.router.get('/files', authWithJwt, this.getFiles.bind(this));
 
-        this.router.post(
-            '/media',
-            authWithJwt,
-            uploadToDiskStorage.array('files'),
-            this.uploadFiles.bind(this),
-        );
+        this.router.post('/media', authWithJwt, uploadToDiskStorage.array('files'), this.uploadFiles.bind(this));
 
-        this.router.post(
-            '/files',
-            authWithJwt,
-            uploadToDiskStorage.array('files'),
-            this.uploadFiles.bind(this),
-        );
+        this.router.post('/files', authWithJwt, uploadToDiskStorage.array('files'), this.uploadFiles.bind(this));
 
-        this.router.delete(
-            '/media/:id',
-            authWithJwt,
-            this.deleteFiles.bind(this),
-        );
-        this.router.delete(
-            '/files/:id',
-            authWithJwt,
-            this.deleteFiles.bind(this),
-        );
+        this.router.delete('/media/:id', authWithJwt, this.deleteFiles.bind(this));
+        this.router.delete('/files/:id', authWithJwt, this.deleteFiles.bind(this));
 
         this.router
             .get('/category', authWithJwt, this.getCategories.bind(this))
             .get('/categories', authWithJwt, this.getCategories.bind(this))
             .post('/category', authWithJwt, this.addCategory.bind(this))
             .patch('/category/:id', authWithJwt, this.updateCategory.bind(this))
-            .delete(
-                '/category/:id',
-                authWithJwt,
-                this.deleteCategory.bind(this),
-            );
+            .delete('/category/:id', authWithJwt, this.deleteCategory.bind(this));
 
         this.router.get('/liked', authWithJwt, this.getLikedPosts.bind(this));
 
@@ -95,11 +69,7 @@ export class MeController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async getMyInfo(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async getMyInfo(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
             const { id } = req.user;
 
@@ -158,11 +128,7 @@ export class MeController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async getPosts(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async getPosts(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
             const limit: number = parseInt(req.query.limit || '10', 10);
             const keyword: string = decodeURIComponent(req.query.keyword || '');
@@ -217,19 +183,11 @@ export class MeController extends ControllerBase {
                 order: [['createdAt', 'DESC']],
                 limit: limit,
                 offset: this.getOffset(count, page, limit),
-                attributes: [
-                    'id',
-                    'title',
-                    'slug',
-                    'excerpt',
-                    'coverImage',
-                    'createdAt',
-                    'updatedAt',
-                ],
+                attributes: ['id', 'title', 'slug', 'excerpt', 'coverImage', 'createdAt', 'updatedAt'],
             });
 
             return res.json(
-                new JsonResult<IListResult<Post>>({
+                new JsonResult<ListResult<Post>>({
                     success: true,
                     data: {
                         records: posts,
@@ -251,11 +209,7 @@ export class MeController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async getPost(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async getPost(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
             const id = parseInt(req.params.id || '0', 10);
 
@@ -285,15 +239,7 @@ export class MeController extends ControllerBase {
                         attributes: ['id'],
                     },
                 ],
-                attributes: [
-                    'id',
-                    'title',
-                    'slug',
-                    'markdown',
-                    'coverImage',
-                    'createdAt',
-                    'updatedAt',
-                ],
+                attributes: ['id', 'title', 'slug', 'markdown', 'coverImage', 'createdAt', 'updatedAt'],
             });
 
             if (!post) {
@@ -330,16 +276,11 @@ export class MeController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async getFiles(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async getFiles(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
             const page = tryParseInt(req.query.page, 10, 1);
             const limit = tryParseInt(req.query.limit, 10, 10);
-            const keyword =
-                req.query.keyword && decodeURIComponent(req.query.keyword);
+            const keyword = req.query.keyword && decodeURIComponent(req.query.keyword);
 
             const where: WhereOptions = { userId: req.user.id };
 
@@ -361,19 +302,11 @@ export class MeController extends ControllerBase {
                 order: [['createdAt', 'DESC']],
                 limit: limit,
                 offset: this.getOffset(count, page, limit),
-                attributes: [
-                    'id',
-                    'src',
-                    'fileName',
-                    'fileExtension',
-                    'size',
-                    'contentType',
-                    'createdAt',
-                ],
+                attributes: ['id', 'src', 'fileName', 'fileExtension', 'size', 'contentType', 'createdAt'],
             });
 
             return res.json(
-                new JsonResult<IListResult<Image>>({
+                new JsonResult<ListResult<Image>>({
                     success: true,
                     data: {
                         records: images,
@@ -400,11 +333,7 @@ export class MeController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async uploadFiles(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async uploadFiles(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
             const files = req.files as Express.Multer.File[];
 
@@ -416,17 +345,10 @@ export class MeController extends ControllerBase {
                         const basename = path.basename(filename, ext);
 
                         const savedFileExt = path.extname(v.path);
-                        const savedFileBasename = encodeURIComponent(
-                            path.basename(v.path, savedFileExt),
-                        );
+                        const savedFileBasename = encodeURIComponent(path.basename(v.path, savedFileExt));
                         const savedFileDir = path.dirname(v.path);
-                        const serverRootDir = path.normalize(
-                            path.join(process.cwd()),
-                        );
-                        const savedFileRelativeDir = path.relative(
-                            serverRootDir,
-                            savedFileDir,
-                        );
+                        const serverRootDir = path.normalize(path.join(process.cwd()));
+                        const savedFileRelativeDir = path.relative(serverRootDir, savedFileDir);
 
                         const src = `/${replaceAll(
                             savedFileRelativeDir,
@@ -453,22 +375,14 @@ export class MeController extends ControllerBase {
             const addedImages = await Image.findAll({
                 where: {
                     id: {
-                        [Sequelize.Op.in]: images.map((v) => v.id),
+                        [Sequelize.Op.in]: images.map(v => v.id),
                     },
                 },
-                attributes: [
-                    'id',
-                    'src',
-                    'fileName',
-                    'fileExtension',
-                    'size',
-                    'contentType',
-                    'createdAt',
-                ],
+                attributes: ['id', 'src', 'fileName', 'fileExtension', 'size', 'contentType', 'createdAt'],
             });
 
             return res.json(
-                new JsonResult<IListResult<Image>>({
+                new JsonResult<ListResult<Image>>({
                     success: true,
                     data: {
                         records: addedImages,
@@ -490,11 +404,7 @@ export class MeController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async deleteFiles(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async deleteFiles(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
             const { id } = req.params;
 
@@ -505,16 +415,7 @@ export class MeController extends ControllerBase {
                         id: id,
                     },
                 },
-                attributes: [
-                    'id',
-                    'path',
-                    'src',
-                    'fileName',
-                    'fileExtension',
-                    'size',
-                    'contentType',
-                    'createdAt',
-                ],
+                attributes: ['id', 'path', 'src', 'fileName', 'fileExtension', 'size', 'contentType', 'createdAt'],
             });
 
             if (!foundImage) {
@@ -562,16 +463,11 @@ export class MeController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async getCategories(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async getCategories(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
             const page: number = tryParseInt(req.query.page, 10, 1);
             const limit: number = tryParseInt(req.query.limit, 10, 10);
-            const keyword: string =
-                req.query.keyword && decodeURIComponent(req.query.keyword);
+            const keyword: string = req.query.keyword && decodeURIComponent(req.query.keyword);
 
             const where: WhereOptions = { userId: req.user.id };
 
@@ -606,7 +502,7 @@ export class MeController extends ControllerBase {
             });
 
             return res.json(
-                new JsonResult<IListResult<Category>>({
+                new JsonResult<ListResult<Category>>({
                     success: true,
                     data: {
                         records: categories,
@@ -635,11 +531,7 @@ export class MeController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async addCategory(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async addCategory(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
             const { name, slug, ordinal } = req.body;
             const slugValue = slug || makeSlug(name);
@@ -695,7 +587,7 @@ export class MeController extends ControllerBase {
 
             if (adjustOridnal) {
                 await Promise.all(
-                    adjustOridnal.map((v) => {
+                    adjustOridnal.map(v => {
                         return v.update({
                             ordinal: v.ordinal + 1,
                         });
@@ -817,7 +709,7 @@ export class MeController extends ControllerBase {
 
             if (adjustOridnal) {
                 await Promise.all(
-                    adjustOridnal.map((v) => {
+                    adjustOridnal.map(v => {
                         return v.update({
                             ordinal: v.ordinal + 1,
                         });
@@ -916,16 +808,11 @@ export class MeController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async getLikedPosts(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async getLikedPosts(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
             const page: number = tryParseInt(req.query.page, 10, 1);
             const limit: number = tryParseInt(req.query.limit, 10, 10);
-            const keyword: string =
-                req.query.keyword && decodeURIComponent(req.query.keyword);
+            const keyword: string = req.query.keyword && decodeURIComponent(req.query.keyword);
 
             const where: WhereOptions = {};
 
@@ -995,18 +882,11 @@ export class MeController extends ControllerBase {
                 order: [['createdAt', 'DESC']],
                 limit: limit,
                 offset: this.getOffset(count, page, limit),
-                attributes: [
-                    'id',
-                    'title',
-                    'slug',
-                    'excerpt',
-                    'coverImage',
-                    'createdAt',
-                ],
+                attributes: ['id', 'title', 'slug', 'excerpt', 'coverImage', 'createdAt'],
             });
 
             return res.json(
-                new JsonResult<IListResult<Post>>({
+                new JsonResult<ListResult<Post>>({
                     success: true,
                     data: {
                         records: likePosts,
@@ -1046,20 +926,9 @@ export class MeController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async addPost(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async addPost(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
-            const {
-                title,
-                slug,
-                markdown,
-                coverImage,
-                categories,
-                tags,
-            }: IPostFormData = req.body;
+            const { title, slug, markdown, coverImage, categories, tags }: IPostFormData = req.body;
 
             if (!title || title.trim().length === 0) {
                 throw new HttpStatusError({
@@ -1106,13 +975,13 @@ export class MeController extends ControllerBase {
 
             if (categories && categories.length > 0) {
                 const foundCategories = await Promise.all(
-                    categories.map((v) => {
+                    categories.map(v => {
                         return Category.findOne({ where: { slug: v.slug } });
                     }),
                 );
 
                 await Promise.all(
-                    foundCategories.map((c) => {
+                    foundCategories.map(c => {
                         return post.$add('categories', c);
                     }),
                 );
@@ -1120,7 +989,7 @@ export class MeController extends ControllerBase {
 
             if (tags && tags.length > 0) {
                 const foundTags = await Promise.all(
-                    tags.map((v) => {
+                    tags.map(v => {
                         const tagSlug = makeSlug(v.name);
                         return Tag.findOrCreate({
                             where: { slug: tagSlug },
@@ -1133,7 +1002,7 @@ export class MeController extends ControllerBase {
                 );
 
                 await Promise.all(
-                    foundTags.map((t) => {
+                    foundTags.map(t => {
                         return post.$add('tags', t[0]);
                     }),
                 );
@@ -1169,15 +1038,7 @@ export class MeController extends ControllerBase {
                     },
                 ],
                 order: [['createdAt', 'DESC']],
-                attributes: [
-                    'id',
-                    'title',
-                    'slug',
-                    'html',
-                    'coverImage',
-                    'createdAt',
-                    'updatedAt',
-                ],
+                attributes: ['id', 'title', 'slug', 'html', 'coverImage', 'createdAt', 'updatedAt'],
             });
 
             return res.json(
@@ -1218,11 +1079,7 @@ export class MeController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async updatePost(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async updatePost(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
             const { id } = req.params;
 
@@ -1253,19 +1110,11 @@ export class MeController extends ControllerBase {
             if (!post) {
                 throw new HttpStatusError({
                     code: 404,
-                    message:
-                        'Could not find a post. The post may not be yours.',
+                    message: 'Could not find a post. The post may not be yours.',
                 });
             }
 
-            const {
-                title,
-                slug,
-                markdown,
-                coverImage,
-                categories,
-                tags,
-            }: IPostFormData = req.body;
+            const { title, slug, markdown, coverImage, categories, tags }: IPostFormData = req.body;
 
             if (!title || title.trim().length === 0) {
                 throw new HttpStatusError({
@@ -1315,21 +1164,13 @@ export class MeController extends ControllerBase {
                     coverImage: coverImage,
                 },
                 {
-                    fields: [
-                        'title',
-                        'slug',
-                        'markdown',
-                        'html',
-                        'text',
-                        'excerpt',
-                        'coverImage',
-                    ],
+                    fields: ['title', 'slug', 'markdown', 'html', 'text', 'excerpt', 'coverImage'],
                 },
             );
 
             if (post.categories && post.categories.length > 0) {
                 await Promise.all(
-                    post.categories.map((c) => {
+                    post.categories.map(c => {
                         return post.$remove('categories', c);
                     }),
                 );
@@ -1337,7 +1178,7 @@ export class MeController extends ControllerBase {
 
             if (post.tags && post.tags.length > 0) {
                 await Promise.all(
-                    post.tags.map((t) => {
+                    post.tags.map(t => {
                         return post.$remove('tags', t);
                     }),
                 );
@@ -1345,13 +1186,13 @@ export class MeController extends ControllerBase {
 
             if (categories && categories.length > 0) {
                 const foundCategories = await Promise.all(
-                    categories.map((v) => {
+                    categories.map(v => {
                         return Category.findOne({ where: { slug: v.slug } });
                     }),
                 );
 
                 await Promise.all(
-                    foundCategories.map((c) => {
+                    foundCategories.map(c => {
                         return post.$add('categories', c);
                     }),
                 );
@@ -1359,7 +1200,7 @@ export class MeController extends ControllerBase {
 
             if (tags && tags.length > 0) {
                 const foundTagsAndCreated = await Promise.all(
-                    tags.map((v) => {
+                    tags.map(v => {
                         const tagSlug: string = makeSlug(v.name);
                         return Tag.findOrCreate({
                             where: { slug: tagSlug },
@@ -1372,7 +1213,7 @@ export class MeController extends ControllerBase {
                 );
 
                 await Promise.all(
-                    foundTagsAndCreated.map((t) => {
+                    foundTagsAndCreated.map(t => {
                         return post.$add('tags', t[0]);
                     }),
                 );
@@ -1408,15 +1249,7 @@ export class MeController extends ControllerBase {
                     },
                 ],
                 order: [['createdAt', 'DESC']],
-                attributes: [
-                    'id',
-                    'title',
-                    'slug',
-                    'html',
-                    'coverImage',
-                    'createdAt',
-                    'updatedAt',
-                ],
+                attributes: ['id', 'title', 'slug', 'html', 'coverImage', 'createdAt', 'updatedAt'],
             });
 
             return res.json(
@@ -1439,11 +1272,7 @@ export class MeController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async deletePost(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<any> {
+    private async deletePost(req: express.Request, res: express.Response, next: express.NextFunction): Promise<any> {
         try {
             const id = parseInt(req.params.id, 10) || -1;
             const post = await Post.findOne({
@@ -1466,14 +1295,7 @@ export class MeController extends ControllerBase {
                     },
                     {
                         model: Image,
-                        attributes: [
-                            'id',
-                            'src',
-                            'size',
-                            'fileName',
-                            'fileExtension',
-                            'contentType',
-                        ],
+                        attributes: ['id', 'src', 'size', 'fileName', 'fileExtension', 'contentType'],
                     },
                     {
                         model: Comment,
@@ -1498,14 +1320,14 @@ export class MeController extends ControllerBase {
 
             if (post.categories && post.categories.length > 0) {
                 await Promise.all(
-                    post.categories.map((x) => {
+                    post.categories.map(x => {
                         return post.$remove('categories', x);
                     }),
                 );
             }
             if (post.accessLogs && post.accessLogs.length > 0) {
                 await Promise.all(
-                    post.accessLogs.map((x) => {
+                    post.accessLogs.map(x => {
                         // return post.$remove('accessLogs', x);
                         return PostAccessLog.destroy({
                             where: {
@@ -1517,14 +1339,14 @@ export class MeController extends ControllerBase {
             }
             if (post.tags && post.tags.length > 0) {
                 await Promise.all(
-                    post.tags.map((x) => {
+                    post.tags.map(x => {
                         return post.$remove('tags', x);
                     }),
                 );
             }
             if (post.comments && post.comments.length > 0) {
                 await Promise.all(
-                    post.comments.map((x) => {
+                    post.comments.map(x => {
                         // return post.$remove('comments', x);
                         return Comment.destroy({
                             where: {
@@ -1537,7 +1359,7 @@ export class MeController extends ControllerBase {
 
             if (post.likers && post.likers.length > 0) {
                 await Promise.all(
-                    post.likers.map((x) => {
+                    post.likers.map(x => {
                         post.$remove('likers', x);
                     }),
                 );
@@ -1565,11 +1387,7 @@ export class MeController extends ControllerBase {
      * @param res
      * @param next
      */
-    private async getTags(
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ) {
+    private async getTags(req: express.Request, res: express.Response, next: express.NextFunction) {
         try {
             // const { page, limit, keyword } = req.query;
             // const pageValue: number = tryParseInt(page, 10, 1);
@@ -1594,7 +1412,7 @@ export class MeController extends ControllerBase {
             });
 
             return res.json(
-                new JsonResult<IListResult<Tag>>({
+                new JsonResult<ListResult<Tag>>({
                     success: true,
                     data: {
                         records: rows,

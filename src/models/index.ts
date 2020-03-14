@@ -1,6 +1,6 @@
 import { Sequelize, SequelizeOptions } from 'sequelize-typescript';
 import { sequelizeConfig } from '../config/config';
-import { IDatabaseConfigItem } from '../typings/IDatabaseConfigItem';
+import { DatabaseConfigItem } from '../typings/DatabaseConfigItem';
 import { User } from './User.model';
 import { Category } from './Category.model';
 import { Post } from './Post.model';
@@ -17,7 +17,7 @@ import { UserVerifyCode } from './UserVerifyCode.model';
 import { Session } from '../passport/Session.model';
 
 const env = process.env.NODE_ENV || 'development';
-const config: IDatabaseConfigItem = sequelizeConfig[env];
+const config: DatabaseConfigItem = sequelizeConfig[env];
 const isTest = env === 'test';
 
 const sequelizeOptions: SequelizeOptions = {
